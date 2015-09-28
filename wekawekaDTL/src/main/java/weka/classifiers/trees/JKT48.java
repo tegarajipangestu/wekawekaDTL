@@ -42,6 +42,7 @@ import weka.core.TechnicalInformation.Type;
 
 import java.util.Enumeration;
 import java.util.Vector;
+import weka.classifiers.trees.jkt48.JKT48Tree;
 
 /**
  * <!-- globalinfo-start -->
@@ -114,14 +115,9 @@ public class JKT48
         extends Classifier {
 
     /**
-     * for serialization
-     */
-    static final long serialVersionUID = -217733168393644444L;
-
-    /**
      * The decision tree
      */
-    private ClassifierTree m_root;
+    private JKT48Tree m_root;
 
     /**
      * Unpruned tree?

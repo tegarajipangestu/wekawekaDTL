@@ -5,12 +5,23 @@
  */
 package weka.classifiers.trees.jkt48;
 
+import weka.core.Instances;
+
 /**
  *
  * @author tegar
  */
 public class JKT48TreeController {
     
-    private JKT48ClassifierTree tree;
+    public JKT48TreeController() {
+        
+    }
     
+    public JKT48Tree printTree()
+    {
+        while ()
+        {
+            
+        }
+    }
 }
