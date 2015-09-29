@@ -34,6 +34,7 @@ public class WekaAccess {
     public static boolean cv10 = false;
 
     public static void main(String[] args) {
+<<<<<<< HEAD
         // TODO code application logic here
         Scanner input = new Scanner(System.in);
         System.out.print("Input complete file location: ");
@@ -125,6 +126,99 @@ public class WekaAccess {
 
         System.out.println("#############################################");
         System.out.print("# > ");
+=======
+	// TODO code application logic here
+	Scanner input = new Scanner(System.in);
+	System.out.print("Input complete file location: ");
+	String fileLocation = input.nextLine();
+	
+	if (fileLocation.endsWith(".csv") || fileLocation.endsWith(".arff")){
+	    try { // file arff/csv
+		System.out.println("Mengambil dataset...");
+		DataSource source = new DataSource(fileLocation);
+		data = source.getDataSet();
+
+		if (data.classIndex() == -1)
+		  data.setClassIndex(data.numAttributes() - 1);
+		System.out.println("Daftar atribut dari data: ");
+		int enumCounter = 1;
+		
+		for (Enumeration<Attribute> atr = data.enumerateAttributes(); atr.hasMoreElements();){
+		    System.out.println(enumCounter + ". " + atr.nextElement());
+		    enumCounter++;
+		}
+
+	    }
+	    catch (Exception E){
+
+		E.printStackTrace();
+	    }
+	}
+	else if (fileLocation.endsWith(".model")) { // file model
+	    System.out.print("Masukkan tipe model [NB|J48|ID3|myId3]: ");
+	    String modelType = input.nextLine();
+	    System.out.println("Mengambil model dari file...");
+	    ModelLearning(fileLocation, modelType);
+	    
+	    System.out.print("Masukkan dataset testing: ");
+	    fileLocation = input.nextLine();
+	    try {
+		DataSource source = new DataSource(fileLocation);
+		data = source.getDataSet();
+		if (data.classIndex() == -1)
+		  data.setClassIndex(data.numAttributes() - 1);
+		
+		test = new Instances(data);
+		if (test.classIndex() == -1)
+		  test.setClassIndex(test.numAttributes() - 1);
+		
+	    } catch (Exception E){ E.printStackTrace(); }
+	}
+	
+	
+	printOptions();
+	int options = input.nextInt();
+	while (options != 0){
+	    switch (options){
+		case 1:
+		    removeAttributes();
+		    break;
+		case 2:
+		    filterResample();
+		    break;
+		case 3:
+		    buildClassifier();
+		    break;
+		case 4:
+		    saveModel();
+		    break;
+		case 5:
+		    testModel();
+		    break;
+		default:
+		    break;
+		
+	    }
+	    printOptions();
+	    options = input.nextInt();
+	}
+		
+		
+		
+    }
+    
+    public static void printOptions(){
+	System.out.println("#############################################");
+	System.out.println("#  Pilihan operasi:                         #");
+	System.out.println("#  1. Hapus atribut                         #");
+	System.out.println("#  2. Filter [resample]                     #");
+	System.out.println("#  3. Bulid Classifier                      #");
+	System.out.println("#  4. Simpan Model                          #");
+	System.out.println("#  5. Uji model                             #");
+	System.out.println("#  0. Keluar                                #");
+	System.out.println("#############################################");
+	System.out.print("# > ");
+>>>>>>> c679622dc9a31fd3696423f4072e39fc1b4255c3
     }
 
     public static void removeAttributes() {
@@ -196,6 +290,7 @@ public class WekaAccess {
         model = C;
         //return C;
     }
+<<<<<<< HEAD
 
     public static void buildClassifier() {
         Scanner in = new Scanner(System.in);
@@ -228,6 +323,37 @@ public class WekaAccess {
                     E.printStackTrace();
                 }
                 break;
+=======
+    
+    public static void buildClassifier(){
+	Scanner in = new Scanner(System.in);
+	int learningType, split, classifierType;
+	
+	System.out.println("## Pilih tipe classifier: ");
+	System.out.println("## 1. Naive Bayes");
+	System.out.println("## 2. ID3");
+	System.out.println("## 3. J48");
+      System.out.println("## 4. myId3");
+	System.out.print("## > ");
+	classifierType = in.nextInt();
+	
+	switch(classifierType){
+	    case 1:
+		model = new NaiveBayes();
+		break;
+	    case 2:
+		model = new Id3();
+		break;
+	    case 3:
+		model = new J48();
+		String[] options = new String[1];
+		options[0] = "weka.classifiers.trees.j48"
+        + "-C 0.25 -M 2"; 
+		try {
+		model.setOptions(options); }
+		catch (Exception E ) { E.printStackTrace(); }
+		break;
+>>>>>>> c679622dc9a31fd3696423f4072e39fc1b4255c3
             case 4:
                 model = new myId3();
                 break;
@@ -277,6 +403,7 @@ public class WekaAccess {
 
         }
     }
+<<<<<<< HEAD
 
     public static void testModel() {
         System.out.println("## Pilih bahan testing");
@@ -337,5 +464,73 @@ public class WekaAccess {
         } catch (Exception E) {
             E.printStackTrace();
         }
+=======
+    
+    public static void testModel(){
+	System.out.println("## Pilih bahan testing");
+	System.out.println("## 1. Uji dengan data dari masukan training");
+	System.out.println("## 2. Uji dengan data data masukan baru");
+	System.out.println("## 3. Uji dengan 1 data masukan secara manual");
+	System.out.print("## > ");
+	
+	int choice = (new Scanner(System.in)).nextInt();
+	if (choice == 1) { 
+	    try {
+		Evaluation eval = new Evaluation(train);
+		
+		if (cv10){
+		    eval.crossValidateModel(model, test, 10, new Random(1));
+		}
+		else
+		    eval.evaluateModel(model, test);
+		
+		System.out.println(eval.toSummaryString());
+		System.out.println(eval.toClassDetailsString());
+		System.out.println(eval.toMatrixString());
+		
+	    } catch (Exception E) {
+		E.printStackTrace();
+	    }
+	}
+	else if (choice == 2) {
+	    try{
+		loadTestData();
+		Evaluation eval = new Evaluation(train);
+		if (cv10)
+		    eval.crossValidateModel(model, test, 10, new Random(1));
+		else
+		    eval.evaluateModel(model, test);
+		
+		System.out.println(eval.toSummaryString());
+		System.out.println(eval.toClassDetailsString());
+		System.out.println(eval.toMatrixString());
+	    }
+	    catch (Exception E) { E.printStackTrace(); }
+	}
+//	
+//	else if (choice == 3){
+//	    //Instance inputInstance = new Instance();
+//	    //inputInstance.
+//		    
+//	}
+	
+    }
+    
+    public static void loadTestData(){
+	System.out.println("Masukkan path file dataset:");
+	System.out.print("### > ");
+	  
+	String testDataLocation = (new Scanner(System.in)).nextLine();
+
+	System.out.println("Mengambil test dataset...");
+	try {
+	    DataSource source = new DataSource(testDataLocation);
+	    test = source.getDataSet();
+
+	    if (test.classIndex() == -1)
+	      test.setClassIndex(test.numAttributes() - 1);
+	}
+	catch (Exception E) { E.printStackTrace(); }
+>>>>>>> c679622dc9a31fd3696423f4072e39fc1b4255c3
     }
 }
