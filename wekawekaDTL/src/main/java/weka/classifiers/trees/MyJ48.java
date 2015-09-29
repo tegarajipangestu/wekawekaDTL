@@ -26,7 +26,6 @@ import weka.classifiers.Classifier;
 import weka.classifiers.Sourcable;
 import weka.classifiers.trees.myj48.BinC45ModelSelection;
 import weka.classifiers.trees.myj48.C45ModelSelection;
-import weka.classifiers.trees.myj48.C45PruneableClassifierTree;
 import weka.classifiers.trees.myj48.ClassifierTree;
 import weka.classifiers.trees.myj48.ModelSelection;
 import weka.classifiers.trees.myj48.PruneableClassifierTree;
@@ -49,6 +48,7 @@ import weka.core.TechnicalInformation.Type;
 
 import java.util.Enumeration;
 import java.util.Vector;
+import weka.classifiers.trees.myj48.MyJ48ClassifierTree;
 
 /**
  <!-- globalinfo-start -->
@@ -117,14 +117,14 @@ import java.util.Vector;
 public class MyJ48 
   extends Classifier 
   implements OptionHandler, Drawable, Matchable, Sourcable, 
-             WeightedInstancesHandler, Summarizable, AdditionalMeasureProducer, 
+             WeightedInstancesHandler, Summarizable, 
              TechnicalInformationHandler {
 
   /** for serialization */
   static final long serialVersionUID = -217733168393644444L;
 
   /** The decision tree */
-  private ClassifierTree m_root;
+  private MyJ48ClassifierTree m_root;
   
   /** Unpruned tree? */
   private boolean m_unpruned = false;
@@ -188,29 +188,6 @@ public class MyJ48
     
     return result;
   }
-
-  /**
-   * Returns default capabilities of the classifier.
-   *
-   * @return      the capabilities of this classifier
-   */
-  public Capabilities getCapabilities() {
-    Capabilities      result;
-    
-    try {
-      if (!m_reducedErrorPruning)
-        result = new C45PruneableClassifierTree(null, !m_unpruned, m_CF, m_subtreeRaising, !m_noCleanup).getCapabilities();
-      else
-        result = new PruneableClassifierTree(null, !m_unpruned, m_numFolds, !m_noCleanup, m_Seed).getCapabilities();
-    }
-    catch (Exception e) {
-      result = new Capabilities(this);
-    }
-    
-    result.setOwner(this);
-    
-    return result;
-  }
   
   /**
    * Generates the classifier.
@@ -228,8 +205,7 @@ public class MyJ48
 //    else
       modSelection = new C45ModelSelection(m_minNumObj, instances);
 //    if (!m_reducedErrorPruning)
-      m_root = new C45PruneableClassifierTree(modSelection, !m_unpruned, m_CF,
-					    m_subtreeRaising, !m_noCleanup);
+      m_root = new MyJ48ClassifierTree();
 //    else
 //      m_root = new PruneableClassifierTree(modSelection, !m_unpruned, m_numFolds,
 //					   !m_noCleanup, m_Seed);
@@ -638,7 +614,7 @@ public class MyJ48
    * Returns the size of the tree
    * @return the size of the tree
    */
-  public double measureTreeSize() {
+  public String measureTreeSize() {
     return m_root.numNodes();
   }
 
@@ -646,7 +622,7 @@ public class MyJ48
    * Returns the number of leaves
    * @return the number of leaves
    */
-  public double measureNumLeaves() {
+  public String measureNumLeaves() {
     return m_root.numLeaves();
   }
 
@@ -654,7 +630,7 @@ public class MyJ48
    * Returns the number of rules (same as number of leaves)
    * @return the number of rules
    */
-  public double measureNumRules() {
+  public String measureNumRules() {
     return m_root.numLeaves();
   }
   
@@ -670,24 +646,6 @@ public class MyJ48
     return newVector.elements();
   }
 
-  /**
-   * Returns the value of the named measure
-   * @param additionalMeasureName the name of the measure to query for its value
-   * @return the value of the named measure
-   * @throws IllegalArgumentException if the named measure is not supported
-   */
-  public double getMeasure(String additionalMeasureName) {
-    if (additionalMeasureName.compareToIgnoreCase("measureNumRules") == 0) {
-      return measureNumRules();
-    } else if (additionalMeasureName.compareToIgnoreCase("measureTreeSize") == 0) {
-      return measureTreeSize();
-    } else if (additionalMeasureName.compareToIgnoreCase("measureNumLeaves") == 0) {
-      return measureNumLeaves();
-    } else {
-      throw new IllegalArgumentException(additionalMeasureName 
-			  + " not supported (j48)");
-    }
-  }
   
   /**
    * Returns the tip text for this property
