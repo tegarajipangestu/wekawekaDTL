@@ -178,7 +178,7 @@ public class Id3
    * @param data the training data
    * @exception Exception if decision tree can't be built successfully
    */
-  private void makeTree(Instances data) throws Exception {
+  void makeTree(Instances data) throws Exception {
 
     // Check if no instances have reached this node.
     if (data.numInstances() == 0) {
@@ -355,7 +355,7 @@ public class Id3
    * @param level the level at which the tree is to be printed
    * @return the tree as string at the given level
    */
-  private String toString(int level) {
+  String toString(int level) {
 
     StringBuffer text = new StringBuffer();
     
