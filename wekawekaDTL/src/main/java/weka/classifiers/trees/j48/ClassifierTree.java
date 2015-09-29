@@ -276,7 +276,7 @@ public class ClassifierTree
   }
 
   /**
-   * Assigns a uniqe id to every node in the tree.
+   * Assigns a unique id to every node in the tree.
    * 
    * @param lastID the last ID that was assign
    * @return the new current ID
