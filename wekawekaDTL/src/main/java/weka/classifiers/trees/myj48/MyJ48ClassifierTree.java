@@ -70,6 +70,7 @@ public class MyJ48ClassifierTree {
 
     }
 
+
     public void buildClassifier(Instances data) throws Exception {
 
         // remove instances with missing class
@@ -253,5 +254,29 @@ public class MyJ48ClassifierTree {
                 child[i].cleanup(justHeaderInfo);
             }
         }
+    }
+
+    public double[] distributionForInstance(Instance instance, boolean m_useLaplace) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    public String prefix() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    public String graph() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    public StringBuffer[] toSource(String className) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    public String numLeaves() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
+
+    public String numNodes() {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
     }
 }
