@@ -10,7 +10,9 @@ package weka.classifiers.trees.myj48;
  * @author tegar
  */
 import java.util.ArrayList;
+import java.util.Enumeration;
 import java.util.List;
+import weka.classifiers.trees.Id3;
 import weka.core.Attribute;
 import weka.core.Capabilities;
 import weka.core.CapabilitiesHandler;
@@ -57,8 +59,7 @@ public class MyJ48ClassifierTree {
      * Id dari node ini
      */
     protected int idNode;
-    
-    
+
     protected Attribute currentClass;
 
     /**
@@ -67,19 +68,7 @@ public class MyJ48ClassifierTree {
     public MyJ48ClassifierTree() {
 
     }
-    
-    public class infoGainAttr
-    {
-        public float entropy;
-        public float[] entropyAttr = new entropy;
-    }
 
-    /**
-     * Method for building a classifier tree.
-     *
-     * @param data the data to build the tree from
-     * @throws Exception if something goes wrong
-     */
     public void buildClassifier(Instances data) throws Exception {
 
         // remove instances with missing class
@@ -97,41 +86,98 @@ public class MyJ48ClassifierTree {
         return data.numInstances() == 0;
     }
 
-    public Instances[] split(Instances data) {
-        
-        //check attribute type
+    private double computeEntropy(Instances data) throws Exception {
 
-        List<double>[][] infoGain = new double[data.numAttributes()][data.numClasses()];
-        for (int i=0;i<data.numAttributes();i++)
-        {
-            infoGain[][]
+        double[] classCounts = new double[data.numClasses()];
+        Enumeration instEnum = data.enumerateInstances();
+        while (instEnum.hasMoreElements()) {
+            Instance inst = (Instance) instEnum.nextElement();
+            classCounts[(int) inst.classValue()]++;
         }
-        for (int i=0;i<data.numAttributes();i++)
-        {
-            currentAttribute.add(data.attribute(i));
+        double entropy = 0;
+        for (int j = 0; j < data.numClasses(); j++) {
+            if (classCounts[j] > 0) {
+                entropy -= classCounts[j] * Utils.log2(classCounts[j]);
+            }
         }
+        entropy /= (double) data.numInstances();
+        return entropy + Utils.log2(data.numInstances());
     }
-    
-    public double computeInfoGain ()
-    {
+
+    private Instances[] splitData(Instances data, Attribute att) {
+
+        Instances[] splitData = new Instances[att.numValues()];
+        for (int j = 0; j < att.numValues(); j++) {
+            splitData[j] = new Instances(data, data.numInstances());
+        }
+        Enumeration instEnum = data.enumerateInstances();
+        while (instEnum.hasMoreElements()) {
+            Instance inst = (Instance) instEnum.nextElement();
+            splitData[(int) inst.value(att)].add(inst);
+        }
+        for (int i = 0; i < splitData.length; i++) {
+            splitData[i].compactify();
+        }
+        return splitData;
+    }
+
+    private double computeInfoGain(Instances data, Attribute att)
+            throws Exception {
+
+        double infoGain = computeEntropy(data);
+        Instances[] splitData = splitData(data, att);
+        for (int j = 0; j < att.numValues(); j++) {
+            if (splitData[j].numInstances() > 0) {
+                infoGain -= ((double) splitData[j].numInstances()
+                        / (double) data.numInstances())
+                        * computeEntropy(splitData[j]);
+            }
+        }
+        return infoGain;
+    }
+
+    public Instances[] split(Instances data) throws Exception {
+
+        Attribute m_Attribute;
+
+        double m_ClassValue;
+
+        double[] m_Distribution;
+
+        Attribute m_ClassAttribute;
+
+        m_Attribute = null;
+        m_ClassValue = Instance.missingValue();
+        m_Distribution = new double[data.numClasses()];
+        double[] infoGains = new double[data.numAttributes()];
+        Enumeration attEnum = data.enumerateAttributes();
         
+        while (attEnum.hasMoreElements()) {
+            Attribute att = (Attribute) attEnum.nextElement();
+            infoGains[att.index()] = computeInfoGain(data, att);
+        }
+        m_Attribute = data.attribute(Utils.maxIndex(infoGains));
+
+        if (Utils.eq(infoGains[m_Attribute.index()], 0)) {
+            return null;
+        } else {
+            Instances[] splitData = splitData(data, m_Attribute);
+            return splitData;
+        }
     }
-    
-    public Attribute getMajorityClassinParent()
-    {
+
+    public Attribute getMajorityClassinParent() {
         Instances instances = parent.trainInstances;
         int numClassAttribute = instances.numDistinctValues(instances.classIndex());
         instances.sort(instances.classIndex());
 
-        
         return null;
     }
 
-    public MyJ48ClassifierTree getParent()
-    {
+    public MyJ48ClassifierTree getParent() {
         return parent;
     }
-    
+
     public void buildTree(Instances data, boolean keepData) throws Exception {
 
         Instances[] localInstances;
@@ -152,66 +198,13 @@ public class MyJ48ClassifierTree {
 
         } else if (isEmptyInstances(data)) {
             //Class Majority in parent
-            
+
         } else {
-            
+
         }
 
-        m_localModel = m_toSelectModel.selectModel(data);
-        if (m_localModel.numSubsets() > 1) {
-            localInstances = m_localModel.split(data);
-            data = null;
-            child = new MyJ48ClassifierTree[m_localModel.numSubsets()];
-            for (int i = 0; i < child.length; i++) {
-                child[i] = getNewTree(localInstances[i]);
-                localInstances[i] = null;
-            }
-        } else {
-            isLeaf = true;
-            if (Utils.eq(data.sumOfWeights(), 0)) {
-                isEmpty = true;
-            }
-            data = null;
-        }
     }
 
-    public void buildTree(Instances data, boolean keepData, MyJ48ClassifierTree classifierTree) throws Exception {
-
-        Instances[] localInstances;
-        pruningInstances = null;
-        isLeaf = false;
-        isEmpty = false;
-        child = null;
-        currentClass = null;
-        parent = classifierTree;
-
-        if (keepData) {
-            trainInstances = data;
-        }
-
-        if (isSingleClass(data)) {
-            isLeaf = true;
-            currentClass = data.classAttribute();
-
-        } else if (isEmptyInstances(data)) {
-            //Class Majority in parent
-            
-        } else {
-            localInstances = split(data);
-            for (int i=0;i<localInstances.length;i++)
-            {
-                buildTree(localInstances[i], keepData, this);
-            }
-        }
-    }
-
-    /**
-     * Classifies an instance.
-     *
-     * @param instance the instance to classify
-     * @return the classification
-     * @throws Exception if something goes wrong
-     */
     public double classifyInstance(Instance instance)
             throws Exception {
 
