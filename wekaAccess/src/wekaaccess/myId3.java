@@ -104,7 +104,8 @@ import java.util.Vector;
     // Check if no instances have reached this node.
     if (data.numInstances() == 0) {
       split_attribute = null;
-      leaf_class = maxAttr(data, data.attribute(0));
+      Instance temp = data.instance(0);
+      leaf_class = maxAttr(data, temp.classAttribute());
       leaf_distribution = new double[data.numClasses()];
       return;
     }
@@ -158,7 +159,6 @@ import java.util.Vector;
   @Override
   public double[] distributionForInstance(Instance instance) 
     throws Exception {
-
     if (instance.hasMissingValue()) {
       throw new Exception("Can't handle missing value(s)");
     }
@@ -183,24 +183,6 @@ import java.util.Vector;
       }
     }
     return infoGain;
-  }
-
-  private double computeEntropy(Instances data) throws Exception {
-
-    double [] classCounts = new double[data.numClasses()];
-    Enumeration instEnum = data.enumerateInstances();
-    while (instEnum.hasMoreElements()) {
-      Instance inst = (Instance) instEnum.nextElement();
-      classCounts[(int) inst.classValue()]++;
-    }
-    double entropy = 0;
-    for (int j = 0; j < data.numClasses(); j++) {
-      if (classCounts[j] > 0) {
-        entropy -= classCounts[j] * Utils.log2(classCounts[j]);
-      }
-    }
-    entropy /= (double) data.numInstances();
-    return entropy + Utils.log2(data.numInstances());
   }
   
    private double hitungEntropy(Instances data) {
@@ -242,105 +224,5 @@ import java.util.Vector;
     return splitData;
   }
 
-  /**
-   * Outputs a tree at a certain level.
-   *
-   * @param level the level at which the tree is to be printed
-   * @return the tree as string at the given level
-   */
-  private String toString(int level) {
-
-    StringBuffer text = new StringBuffer();
-    
-    if (split_attribute == null) {
-      if (Instance.isMissingValue(leaf_class)) {
-        text.append(": null");
-      } else {
-        text.append(": " + class_attribute.value((int) leaf_class));
-      } 
-    } else {
-      for (int j = 0; j < split_attribute.numValues(); j++) {
-        text.append("\n");
-        for (int i = 0; i < level; i++) {
-          text.append("|  ");
-        }
-        text.append(split_attribute.name() + " = " + split_attribute.value(j));
-        text.append(child[j].toString(level + 1));
-      }
-    }
-    return text.toString();
-  }
-
-  /**
-   * Adds this tree recursively to the buffer.
-   * 
-   * @param id          the unqiue id for the method
-   * @param buffer      the buffer to add the source code to
-   * @return            the last ID being used
-   * @throws Exception  if something goes wrong
-   */
-  protected int toSource(int id, StringBuffer buffer) throws Exception {
-    int                 result;
-    int                 i;
-    int                 newID;
-    StringBuffer[]      subBuffers;
-    
-    buffer.append("\n");
-    buffer.append("  protected static double node" + id + "(Object[] i) {\n");
-    
-    // leaf?
-    if (split_attribute == null) {
-      result = id;
-      if (Double.isNaN(leaf_class)) {
-        buffer.append("    return Double.NaN;");
-      } else {
-        buffer.append("    return " + leaf_class + ";");
-      }
-      if (class_attribute != null) {
-        buffer.append(" // " + class_attribute.value((int) leaf_class));
-      }
-      buffer.append("\n");
-      buffer.append("  }\n");
-    } else {
-      buffer.append("    checkMissing(i, " + split_attribute.index() + ");\n\n");
-      buffer.append("    // " + split_attribute.name() + "\n");
-      
-      // subtree calls
-      subBuffers = new StringBuffer[split_attribute.numValues()];
-      newID = id;
-      for (i = 0; i < split_attribute.numValues(); i++) {
-        newID++;
-
-        buffer.append("    ");
-        if (i > 0) {
-          buffer.append("else ");
-        }
-        buffer.append("if (((String) i[" + split_attribute.index() 
-            + "]).equals(\"" + split_attribute.value(i) + "\"))\n");
-        buffer.append("      return node" + newID + "(i);\n");
-
-        subBuffers[i] = new StringBuffer();
-        newID = child[i].toSource(newID, subBuffers[i]);
-      }
-      buffer.append("    else\n");
-      buffer.append("      throw new IllegalArgumentException(\"Value '\" + i["
-          + split_attribute.index() + "] + \"' is not allowed!\");\n");
-      buffer.append("  }\n");
-
-      // output subtree code
-      for (i = 0; i < split_attribute.numValues(); i++) {
-        buffer.append(subBuffers[i].toString());
-      }
-      subBuffers = null;
-      
-      result = newID;
-    }
-    
-    return result;
-  }
-  
-//  public static void main(String[] args) {
-//    runClassifier(new myId3(), args);
-//  }
 }
 
