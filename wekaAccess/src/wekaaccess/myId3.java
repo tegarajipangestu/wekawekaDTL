@@ -110,10 +110,12 @@ import java.util.Vector;
     
     // Compute attribute with maximum information gain.
     double[] infoGains = new double[data.numAttributes()];
+    double[] GainRatio = new double[data.numAttributes()];
     Enumeration attEnum = data.enumerateAttributes();
     while (attEnum.hasMoreElements()) {
       Attribute att = (Attribute) attEnum.nextElement();
       infoGains[att.index()] = computeInfoGain(data, att);
+      GainRatio[att.index()] = computInfoGain(data, att)/hitungEntropy(data);
     }
     split_attribute = data.attribute(Utils.maxIndex(infoGains));
     
