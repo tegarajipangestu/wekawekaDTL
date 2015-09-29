@@ -12,16 +12,9 @@ package weka.classifiers.trees.myj48;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
-import weka.classifiers.rules.ZeroR;
-import weka.classifiers.trees.Id3;
 import weka.core.Attribute;
-import weka.core.Capabilities;
-import weka.core.CapabilitiesHandler;
-import weka.core.Drawable;
 import weka.core.Instance;
 import weka.core.Instances;
-import weka.core.RevisionHandler;
-import weka.core.RevisionUtils;
 import weka.core.Utils;
 
 public class MyJ48ClassifierTree {
@@ -69,7 +62,6 @@ public class MyJ48ClassifierTree {
     public MyJ48ClassifierTree() {
 
     }
-
 
     public void buildClassifier(Instances data) throws Exception {
 
@@ -170,7 +162,7 @@ public class MyJ48ClassifierTree {
 
     public String getMajorityClassinParent() throws Exception {
         Instances instances = parent.trainInstances;
-        
+
         return getMajorityClass(instances);
     }
 
@@ -185,7 +177,7 @@ public class MyJ48ClassifierTree {
                 className.add(instances.instance(i).stringValue(indexClass));
             }
         }
-        
+
         return instances.instance(0).stringValue(indexClass);
     }
 
@@ -193,10 +185,112 @@ public class MyJ48ClassifierTree {
         return parent;
     }
 
-    public Instances MyNumerictoNominal (Instances instances)
-    {
+    public Instances MyNumerictoNominal(Instances instances) {
         return null;
     }
+
+    public final ClassifierSplitModel selectModel(Instances data) {
+
+        double minResult;
+        double currentResult;
+        C45Split[] currentModel;
+        C45Split bestModel = null;
+        NoSplit noSplitModel = null;
+        double averageInfoGain = 0;
+        int validModels = 0;
+        boolean multiVal = true;
+        Distribution checkDistribution;
+        Attribute attribute;
+        double sumOfWeights;
+        int i;
+
+        try {
+
+            checkDistribution = new Distribution(data);
+            noSplitModel = new NoSplit(checkDistribution);
+            if (Utils.sm(checkDistribution.total(), 2 * m_minNoObj)
+                    || Utils.eq(checkDistribution.total(),
+                            checkDistribution.perClass(checkDistribution.maxClass()))) {
+                return noSplitModel;
+            }
+
+            if (data != null) {
+                Enumeration enu = data.enumerateAttributes();
+                while (enu.hasMoreElements()) {
+                    attribute = (Attribute) enu.nextElement();
+                    if ((attribute.isNumeric())
+                            || (Utils.sm((double) attribute.numValues(),
+                                    (0.3 * (double) data.numInstances())))) {
+                        multiVal = false;
+                        break;
+                    }
+                }
+            }
+
+            currentModel = new C45Split[data.numAttributes()];
+            sumOfWeights = data.sumOfWeights();
+
+            for (i = 0; i < data.numAttributes(); i++) {
+
+                if (i != (data).classIndex()) {
+
+                    currentModel[i] = new C45Split(i, data, sumOfWeights);
+                    currentModel[i].buildClassifier(data);
+
+                    if (currentModel[i].checkModel()) {
+                        if (data != null) {
+                            if ((data.attribute(i).isNumeric())
+                                    || (multiVal || Utils.sm((double) data.attribute(i).numValues(),
+                                            (0.3 * (double) data.numInstances())))) {
+                                averageInfoGain = averageInfoGain + currentModel[i].infoGain();
+                                validModels++;
+                            }
+                        } else {
+                            averageInfoGain = averageInfoGain + currentModel[i].infoGain();
+                            validModels++;
+                        }
+                    }
+                } else {
+                    currentModel[i] = null;
+                }
+            }
+
+            if (validModels == 0) {
+                return noSplitModel;
+            }
+            averageInfoGain = averageInfoGain / (double) validModels;
+
+            minResult = 0;
+            for (i = 0; i < data.numAttributes(); i++) {
+                if ((i != (data).classIndex())
+                        && (currentModel[i].checkModel())) // Use 1E-3 here to get a closer approximation to the original
+                // implementation.
+                {
+                    if ((currentModel[i].infoGain() >= (averageInfoGain - 1E-3))
+                            && Utils.gr(currentModel[i].gainRatio(), minResult)) {
+                        bestModel = currentModel[i];
+                        minResult = currentModel[i].gainRatio();
+                    }
+                }
+            }
+
+            if (Utils.eq(minResult, 0)) {
+                return noSplitModel;
+            }
+
+            bestModel.distribution().
+                    addInstWithUnknown(data, bestModel.attIndex());
+
+            if (m_allData != null) {
+                bestModel.setSplitPoint(m_allData);
+            }
+            return bestModel;
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        return null;
+    }
+
     public void buildTree(Instances data, boolean keepData) throws Exception {
 
         Instances[] localInstances;
