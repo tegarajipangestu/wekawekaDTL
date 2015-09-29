@@ -1,2 +1,2 @@
-/wekawekaDTL/dist/
-/weka-src/dist/
+wekawekaDTL/src/*
+*.class

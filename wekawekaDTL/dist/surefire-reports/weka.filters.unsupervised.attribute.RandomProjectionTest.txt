@@ -1,0 +1,106 @@
+-------------------------------------------------------------------------------
+Test set: weka.filters.unsupervised.attribute.RandomProjectionTest
+-------------------------------------------------------------------------------
+Tests run: 21, Failures: 1, Errors: 0, Skipped: 0, Time elapsed: 0.025 sec <<< FAILURE!
+testRegression(weka.filters.unsupervised.attribute.RandomProjectionTest)  Time elapsed: 0.003 sec  <<< FAILURE!
+junit.framework.AssertionFailedError: Regression test failed. Difference:
++++ Reference: src/test/resources/wekarefs/weka/filters/unsupervised/attribute/RandomProjectionTest.ref +++
+@relation FilterTest-weka.filters.supervised.attribute.NominalToBinary-weka.filters.unsupervised.attribute.RandomProjection-N10-R42-DSparse1
+@attribute K1 numeric
+@attribute K2 numeric
+@attribute K3 numeric
+@attribute K4 numeric
+@attribute K5 numeric
+@attribute K6 numeric
+@attribute K7 numeric
+@attribute K8 numeric
+@attribute K9 numeric
+@attribute K10 numeric
+@attribute NominalAtt1 {r,g,b}
+@data
+3.464102,-2.251666,-1.732051,0,-1.732051,1.732051,-1708170676673.03168,-1.732051,1708170676673.03168,5.715768,g
+6.928203,-5.715768,0,0,-1.732051,3.464102,-1708170676671.299584,-3.464102,1708170676673.03168,5.715768,b
+10.392305,-2.424871,0,0,-3.464102,5.196152,-1708170676667.835392,-5.196152,1708170676669.567744,2.424871,r
+15.588457,-9.179869,0,0,-5.196152,6.928203,-1708170676667.835392,-6.928203,1708170676667.835392,7.447818,r
+17.320508,-2.771281,-1.732051,0,-8.660254,8.660254,-1708170676666.103552,-8.660254,1708170676666.103552,6.235383,b
+20.78461,-12.643971,0,0,-8.660254,10.392305,-1708320325854.14528,-10.392305,1708320325855.877376,12.643971,r
+13.856406,-3.117691,0,0,-10.392305,1.732051,-1708320325850.681088,-12.124356,1708320325862.80576,-7.274613,r
+27.712813,-16.108073,0,0,-12.124356,12.124356,-1708320325850.681088,-13.856406,1708320325852.41344,3.983717,g
+29.444864,-3.464102,0,0,-15.588457,13.856406,-1712809801542.167808,-15.588457,1712809801543.899648,0,b
+16.281278,-15.588457,0,0,-16.281278,0,-1712809801541.474816,-16.281278,1712809801557.75616,7.967434,r
+4.156922,-12.643971,-1.732051,0,-2.424871,1.732051,-1712959450745.105152,-2.424871,1712959450745.798144,27.539608,r
+7.447818,-12.643971,0,0,-2.251666,3.464102,-1712959450743.546368,-3.983717,1712959450745.798144,24.248711,b
+10.91192,1.732051,0,0,-3.983717,5.196152,-1712959450740.082176,-5.715768,1712959450742.333952,9.87269,r
+16.108073,-9.179869,0,0,-5.715768,6.928203,-1712959450740.082176,-7.447818,1712959450740.601856,19.052559,r
+17.840123,-9.699485,0,0,-9.179869,8.660254,-1713109099928.123904,-9.179869,1713109099928.64384,21.304225,g
+21.650635,-7.447818,0,0,-9.526279,10.392305,-1713109099926.045696,-11.25833,1713109099928.64384,18.706149,b
+14.722432,-4.849742,0,0,-11.25833,1.732051,-1717748224805.573888,-12.990381,1717748224818.564352,16.108073,r
+28.578838,-3.983717,0,0,-12.990381,12.124356,-1717748224805.573888,-14.722432,1717748224808.172032,4.849742,r
+16.281278,0,-1.732051,0,-16.281278,0,-1717897873993.789184,-16.281278,1717897874010.070272,6.235383,r
+10.91192,0,0,0,-5.715768,1.732051,7.447818,-7.447818,-1.732051,1.212436,r
+12.124356,7.621024,-1.732051,0,0,12.124356,0,0,-12.124356,-2.424871,b
++++ Current +++
+@relation FilterTest-weka.filters.supervised.attribute.NominalToBinary-weka.filters.unsupervised.attribute.RandomProjection-N10-R42-DSparse1
+@attribute K1 numeric
+@attribute K2 numeric
+@attribute K3 numeric
+@attribute K4 numeric
+@attribute K5 numeric
+@attribute K6 numeric
+@attribute K7 numeric
+@attribute K8 numeric
+@attribute K9 numeric
+@attribute K10 numeric
+@attribute NominalAtt1 {r,g,b}
+@data
+3.464102,-2.251666,-1.732051,0,-1.732051,1.732051,-1708201853587.567872,-1.732051,1708201853587.567872,5.715768,g
+6.928203,-5.715768,0,0,-1.732051,3.464102,-1708201853585.835776,-3.464102,1708201853587.567872,5.715768,b
+10.392305,-2.424871,0,0,-3.464102,5.196152,-1708201853582.371584,-5.196152,1708201853584.10368,2.424871,r
+15.588457,-9.179869,0,0,-5.196152,6.928203,-1708201853582.371584,-6.928203,1708201853582.371584,7.447818,r
+17.320508,-2.771281,-1.732051,0,-8.660254,8.660254,-1708201853580.639744,-8.660254,1708201853580.639744,6.235383,b
+20.78461,-12.643971,0,0,-8.660254,10.392305,-1708351502768.681472,-10.392305,1708351502770.413568,12.643971,r
+13.856406,-3.117691,0,0,-10.392305,1.732051,-1708351502765.21728,-12.124356,1708351502777.341696,-7.274613,r
+27.712813,-16.108073,0,0,-12.124356,12.124356,-1708351502765.21728,-13.856406,1708351502766.949376,3.983717,g
+29.444864,-3.464102,0,0,-15.588457,13.856406,-1712840978456.703744,-15.588457,1712840978458.43584,0,b
+16.281278,-15.588457,0,0,-16.281278,0,-1712840978456.011008,-16.281278,1712840978472.292352,7.967434,r
+4.156922,-12.643971,-1.732051,0,-2.424871,1.732051,-1712990627659.641344,-2.424871,1712990627660.334336,27.539608,r
+7.447818,-12.643971,0,0,-2.251666,3.464102,-1712990627658.08256,-3.983717,1712990627660.334336,24.248711,b
+10.91192,1.732051,0,0,-3.983717,5.196152,-1712990627654.618368,-5.715768,1712990627656.870144,9.87269,r
+16.108073,-9.179869,0,0,-5.715768,6.928203,-1712990627654.618368,-7.447818,1712990627655.138048,19.052559,r
+17.840123,-9.699485,0,0,-9.179869,8.660254,-1713140276842.660096,-9.179869,1713140276843.180032,21.304225,g
+21.650635,-7.447818,0,0,-9.526279,10.392305,-1713140276840.581888,-11.25833,1713140276843.180032,18.706149,b
+14.722432,-4.849742,0,0,-11.25833,1.732051,-1717779401720.110336,-12.990381,1717779401733.1008,16.108073,r
+28.578838,-3.983717,0,0,-12.990381,12.124356,-1717779401720.110336,-14.722432,1717779401722.70848,4.849742,r
+16.281278,0,-1.732051,0,-16.281278,0,-1717929050908.325376,-16.281278,1717929050924.60672,6.235383,r
+10.91192,0,0,0,-5.715768,1.732051,7.447818,-7.447818,-1.732051,1.212436,r
+12.124356,7.621024,-1.732051,0,0,12.124356,0,0,-12.124356,-2.424871,b
++++
+	at junit.framework.Assert.fail(Assert.java:47)
+	at weka.filters.AbstractFilterTest.testRegression(AbstractFilterTest.java:402)
+	at sun.reflect.GeneratedMethodAccessor89.invoke(Unknown Source)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:497)
+	at junit.framework.TestCase.runTest(TestCase.java:164)
+	at junit.framework.TestCase.runBare(TestCase.java:130)
+	at junit.framework.TestResult$1.protect(TestResult.java:106)
+	at junit.framework.TestResult.runProtected(TestResult.java:124)
+	at junit.framework.TestResult.run(TestResult.java:109)
+	at junit.framework.TestCase.run(TestCase.java:120)
+	at junit.framework.TestSuite.runTest(TestSuite.java:230)
+	at junit.framework.TestSuite.run(TestSuite.java:225)
+	at sun.reflect.GeneratedMethodAccessor4.invoke(Unknown Source)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:497)
+	at org.apache.maven.surefire.junit.JUnitTestSet.execute(JUnitTestSet.java:98)
+	at org.apache.maven.surefire.junit.JUnit3Provider.executeTestSet(JUnit3Provider.java:107)
+	at org.apache.maven.surefire.junit.JUnit3Provider.invoke(JUnit3Provider.java:84)
+	at sun.reflect.NativeMethodAccessorImpl.invoke0(Native Method)
+	at sun.reflect.NativeMethodAccessorImpl.invoke(NativeMethodAccessorImpl.java:62)
+	at sun.reflect.DelegatingMethodAccessorImpl.invoke(DelegatingMethodAccessorImpl.java:43)
+	at java.lang.reflect.Method.invoke(Method.java:497)
+	at org.apache.maven.surefire.booter.ProviderFactory$ClassLoaderProxy.invoke(ProviderFactory.java:103)
+	at com.sun.proxy.$Proxy0.invoke(Unknown Source)
+	at org.apache.maven.surefire.booter.SurefireStarter.invokeProvider(SurefireStarter.java:150)
+	at org.apache.maven.surefire.booter.SurefireStarter.runSuitesInProcess(SurefireStarter.java:91)
+	at org.apache.maven.surefire.booter.ForkedBooter.main(ForkedBooter.java:69)
+
