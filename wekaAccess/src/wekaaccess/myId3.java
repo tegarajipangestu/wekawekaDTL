@@ -115,7 +115,7 @@ import java.util.Vector;
     while (attEnum.hasMoreElements()) {
       Attribute att = (Attribute) attEnum.nextElement();
       infoGains[att.index()] = computeInfoGain(data, att);
-      GainRatio[att.index()] = computInfoGain(data, att)/hitungEntropy(data);
+      GainRatio[att.index()] = computeInfoGain(data, att)/hitungEntropy(data);
     }
     split_attribute = data.attribute(Utils.maxIndex(infoGains));
     
