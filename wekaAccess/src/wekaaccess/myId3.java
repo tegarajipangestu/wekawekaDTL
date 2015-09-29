@@ -5,6 +5,7 @@
  */
 package wekaaccess;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import weka.classifiers.Classifier;
 import weka.classifiers.Sourcable;
@@ -17,6 +18,7 @@ import weka.core.Utils;
 import weka.core.Capabilities.Capability;
 
 import java.util.Enumeration;
+import java.util.List;
 import java.util.Vector;
 
 
@@ -98,14 +100,12 @@ import java.util.Vector;
     }
     return max;
   }
-
-
+  
   private void makeTree(Instances data) throws Exception {
     // Check if no instances have reached this node.
     if (data.numInstances() == 0) {
       split_attribute = null;
-      Instance temp = data.instance(0);
-      leaf_class = maxAttr(data, temp.classAttribute());
+      leaf_class = Double.NaN;
       leaf_distribution = new double[data.numClasses()];
       return;
     }
@@ -131,6 +131,7 @@ import java.util.Vector;
       }
       Utils.normalize(leaf_distribution);
       leaf_class = Utils.maxIndex(leaf_distribution);
+      //leaf_class = maxAttr(data, split_attribute);
       class_attribute = data.classAttribute();
     } else {
       Instances[] splitData = splitData(data, split_attribute);
@@ -138,6 +139,10 @@ import java.util.Vector;
       for (int j = 0; j < split_attribute.numValues(); j++) {
         child[j] = new myId3();
         child[j].makeTree(splitData[j]);
+        if(Utils.eq(splitData[j].numInstances(),0))
+        {
+            child[j].leaf_class = maxAttr(data, data.attribute(j));
+        }
       }
     }
   }
