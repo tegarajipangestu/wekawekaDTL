@@ -79,6 +79,7 @@ public class WekaAccess {
 		test = new Instances(data);
 		if (test.classIndex() == -1)
 		  test.setClassIndex(test.numAttributes() - 1);
+		
 	    } catch (Exception E){ E.printStackTrace(); }
 	}
 	
@@ -123,7 +124,6 @@ public class WekaAccess {
 	System.out.println("#  4. Simpan Model                          #");
 	System.out.println("#  5. Uji model                             #");
 	System.out.println("#  0. Keluar                                #");
-	
 	System.out.println("#############################################");
 	System.out.print("# > ");
     }
@@ -205,7 +205,7 @@ public class WekaAccess {
 	System.out.println("## 1. Naive Bayes");
 	System.out.println("## 2. ID3");
 	System.out.println("## 3. J48");
-        System.out.println("## 4. myId3");
+      System.out.println("## 4. myId3");
 	System.out.print("## > ");
 	classifierType = in.nextInt();
 	
@@ -284,6 +284,8 @@ public class WekaAccess {
 		    eval.evaluateModel(model, test);
 		
 		System.out.println(eval.toSummaryString());
+		System.out.println(eval.toClassDetailsString());
+		System.out.println(eval.toMatrixString());
 		
 	    } catch (Exception E) {
 		E.printStackTrace();
@@ -299,18 +301,24 @@ public class WekaAccess {
 		    eval.evaluateModel(model, test);
 		
 		System.out.println(eval.toSummaryString());
+		System.out.println(eval.toClassDetailsString());
+		System.out.println(eval.toMatrixString());
 	    }
 	    catch (Exception E) { E.printStackTrace(); }
 	}
-	else if (choice == 3){
-	    //Instance inputInstance = new Instance();
-	    //inputInstance.
-		    
-	}
+//	
+//	else if (choice == 3){
+//	    //Instance inputInstance = new Instance();
+//	    //inputInstance.
+//		    
+//	}
 	
     }
     
     public static void loadTestData(){
+	System.out.println("Masukkan path file dataset:");
+	System.out.print("### > ");
+	  
 	String testDataLocation = (new Scanner(System.in)).nextLine();
 
 	System.out.println("Mengambil test dataset...");
