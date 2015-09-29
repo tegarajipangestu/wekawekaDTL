@@ -63,7 +63,7 @@ public class WekaAccess {
 	    }
 	}
 	else if (fileLocation.endsWith(".model")) { // file model
-	    System.out.print("Masukkan tipe model [NB|J48|ID3]: ");
+	    System.out.print("Masukkan tipe model [NB|J48|ID3|myId3]: ");
 	    String modelType = input.nextLine();
 	    System.out.println("Mengambil model dari file...");
 	    ModelLearning(fileLocation, modelType);
@@ -172,6 +172,11 @@ public class WekaAccess {
 		    C = new Id3();
 		    C = (Classifier) weka.core.SerializationHelper.read(fileLocation);
 		  break;  
+                case "myId3":
+                System.out.println("Reading myId3 Model...");
+                C = new Id3();
+                C = (Classifier) weka.core.SerializationHelper.read(fileLocation);
+                  break;  
 		case "J48":
 		    System.out.println("Reading J48 Model...");
 		    C = new J48();
@@ -200,6 +205,7 @@ public class WekaAccess {
 	System.out.println("## 1. Naive Bayes");
 	System.out.println("## 2. ID3");
 	System.out.println("## 3. J48");
+        System.out.println("## 4. myId3");
 	System.out.print("## > ");
 	classifierType = in.nextInt();
 	
@@ -219,7 +225,9 @@ public class WekaAccess {
 		model.setOptions(options); }
 		catch (Exception E ) { E.printStackTrace(); }
 		break;
-		
+            case 4:
+            model = new myId3();
+            break;
 	}
 	
 	System.out.println("");
@@ -261,7 +269,7 @@ public class WekaAccess {
 	System.out.println("## Pilih bahan testing");
 	System.out.println("## 1. Uji dengan data dari masukan training");
 	System.out.println("## 2. Uji dengan data data masukan baru");
-	System.out.println("## 2. Uji dengan 1 data masukan secara manual");
+	System.out.println("## 3. Uji dengan 1 data masukan secara manual");
 	System.out.print("## > ");
 	
 	int choice = (new Scanner(System.in)).nextInt();
