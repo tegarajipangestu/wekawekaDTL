@@ -339,8 +339,8 @@ import java.util.Vector;
     return result;
   }
   
-  public static void main(String[] args) {
-    runClassifier(new myId3(), args);
-  }
+//  public static void main(String[] args) {
+//    runClassifier(new myId3(), args);
+//  }
 }
 
