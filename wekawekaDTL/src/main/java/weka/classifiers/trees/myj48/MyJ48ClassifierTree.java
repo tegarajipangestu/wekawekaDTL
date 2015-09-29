@@ -9,6 +9,9 @@ package weka.classifiers.trees.myj48;
  *
  * @author tegar
  */
+import java.util.ArrayList;
+import java.util.List;
+import weka.core.Attribute;
 import weka.core.Capabilities;
 import weka.core.CapabilitiesHandler;
 import weka.core.Drawable;
@@ -24,6 +27,11 @@ public class MyJ48ClassifierTree {
      * Anak dari node
      */
     protected MyJ48ClassifierTree[] child;
+
+    /**
+     * Bapak dari node, you dont say
+     */
+    protected MyJ48ClassifierTree parent;
 
     /**
      * Bernilai true jika node ini adalah daun
@@ -49,12 +57,21 @@ public class MyJ48ClassifierTree {
      * Id dari node ini
      */
     protected int idNode;
+    
+    
+    protected Attribute currentClass;
 
     /**
      * Constructor.
      */
     public MyJ48ClassifierTree() {
 
+    }
+    
+    public class infoGainAttr
+    {
+        public float entropy;
+        public float[] entropyAttr = new entropy;
     }
 
     /**
@@ -82,10 +99,39 @@ public class MyJ48ClassifierTree {
 
     public Instances[] split(Instances data) {
         
-        int [] infoGain;
-        for (int i=0;i<data.attribute(null))
+        //check attribute type
+
+        List<double>[][] infoGain = new double[data.numAttributes()][data.numClasses()];
+        for (int i=0;i<data.numAttributes();i++)
+        {
+            infoGain[][]
+        }
+        for (int i=0;i<data.numAttributes();i++)
+        {
+            currentAttribute.add(data.attribute(i));
+        }
+    }
+    
+    public double computeInfoGain ()
+    {
+        
+    }
+    
+    public Attribute getMajorityClassinParent()
+    {
+        Instances instances = parent.trainInstances;
+        int numClassAttribute = instances.numDistinctValues(instances.classIndex());
+        instances.sort(instances.classIndex());
+
+        
+        return null;
     }
 
+    public MyJ48ClassifierTree getParent()
+    {
+        return parent;
+    }
+    
     public void buildTree(Instances data, boolean keepData) throws Exception {
 
         Instances[] localInstances;
@@ -93,6 +139,8 @@ public class MyJ48ClassifierTree {
         isLeaf = false;
         isEmpty = false;
         child = null;
+        currentClass = null;
+        parent = null;
 
         if (keepData) {
             trainInstances = data;
@@ -100,11 +148,13 @@ public class MyJ48ClassifierTree {
 
         if (isSingleClass(data)) {
             isLeaf = true;
+            currentClass = data.classAttribute();
 
         } else if (isEmptyInstances(data)) {
             //Class Majority in parent
+            
         } else {
-            //
+            
         }
 
         m_localModel = m_toSelectModel.selectModel(data);
@@ -122,6 +172,36 @@ public class MyJ48ClassifierTree {
                 isEmpty = true;
             }
             data = null;
+        }
+    }
+
+    public void buildTree(Instances data, boolean keepData, MyJ48ClassifierTree classifierTree) throws Exception {
+
+        Instances[] localInstances;
+        pruningInstances = null;
+        isLeaf = false;
+        isEmpty = false;
+        child = null;
+        currentClass = null;
+        parent = classifierTree;
+
+        if (keepData) {
+            trainInstances = data;
+        }
+
+        if (isSingleClass(data)) {
+            isLeaf = true;
+            currentClass = data.classAttribute();
+
+        } else if (isEmptyInstances(data)) {
+            //Class Majority in parent
+            
+        } else {
+            localInstances = split(data);
+            for (int i=0;i<localInstances.length;i++)
+            {
+                buildTree(localInstances[i], keepData, this);
+            }
         }
     }
 
