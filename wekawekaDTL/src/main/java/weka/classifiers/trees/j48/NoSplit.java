@@ -46,6 +46,10 @@ public final class NoSplit
     m_distribution = new Distribution(distribution);
     m_numSubsets = 1;
   }
+
+    public NoSplit(weka.classifiers.trees.myj48.Distribution checkDistribution) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
   
   /**
    * Creates a "no-split"-split for a given set of instances.

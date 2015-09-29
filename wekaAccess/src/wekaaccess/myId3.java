@@ -8,12 +8,10 @@ package wekaaccess;
 import java.util.ArrayList;
 import java.util.Collections;
 import weka.classifiers.Classifier;
-import weka.classifiers.Sourcable;
 import weka.core.Attribute;
 import weka.core.Capabilities;
 import weka.core.Instance;
 import weka.core.Instances;
-import weka.core.RevisionUtils;
 import weka.core.Utils;
 import weka.core.Capabilities.Capability;
 

@@ -23,20 +23,14 @@ package weka.classifiers.trees;
 
 import weka.classifiers.Classifier;
 import weka.classifiers.Sourcable;
-import weka.classifiers.trees.myj48.BinC45ModelSelection;
-import weka.classifiers.trees.myj48.C45ModelSelection;
-import weka.classifiers.trees.myj48.ClassifierTree;
+import weka.classifiers.trees.myj48.MyJ48ModelSelection;
 import weka.classifiers.trees.myj48.ModelSelection;
-import weka.classifiers.trees.myj48.PruneableClassifierTree;
-import weka.core.AdditionalMeasureProducer;
-import weka.core.Capabilities;
 import weka.core.Drawable;
 import weka.core.Instance;
 import weka.core.Instances;
 import weka.core.Matchable;
 import weka.core.Option;
 import weka.core.OptionHandler;
-import weka.core.RevisionUtils;
 import weka.core.Summarizable;
 import weka.core.TechnicalInformation;
 import weka.core.TechnicalInformationHandler;
@@ -230,7 +224,7 @@ public class MyJ48
 //    if (m_binarySplits)
 //      modSelection = new BinC45ModelSelection(m_minNumObj, instances);
 //    else
-        modSelection = new C45ModelSelection(m_minNumObj, instances);
+        modSelection = new MyJ48ModelSelection(m_minNumObj, instances);
 //    if (!m_reducedErrorPruning)
         m_root = new MyJ48ClassifierTree();
 //    else
@@ -240,7 +234,7 @@ public class MyJ48
 //    if (m_binarySplits) {
 //      ((BinC45ModelSelection)modSelection).cleanup();
 //    } else {
-        ((C45ModelSelection) modSelection).cleanup();
+        ((MyJ48ModelSelection) modSelection).cleanup();
 //    }
     }
 
@@ -325,52 +319,6 @@ public class MyJ48
         return newVector.elements();
     }
 
-    /**
-     * Parses a given list of options.
-     *
-     * <!-- options-start -->
-     * Valid options are:
-     * <p/>
-     *
-     * <pre> -U
-     *  Use unpruned tree.</pre>
-     *
-     * <pre> -C &lt;pruning confidence&gt;
-     *  Set confidence threshold for pruning.
-     *  (default 0.25)</pre>
-     *
-     * <pre> -M &lt;minimum number of instances&gt;
-     *  Set minimum number of instances per leaf.
-     *  (default 2)</pre>
-     *
-     * <pre> -R
-     *  Use reduced error pruning.</pre>
-     *
-     * <pre> -N &lt;number of folds&gt;
-     *  Set number of folds for reduced error
-     *  pruning. One fold is used as pruning set.
-     *  (default 3)</pre>
-     *
-     * <pre> -B
-     *  Use binary splits only.</pre>
-     *
-     * <pre> -S
-     *  Don't perform subtree raising.</pre>
-     *
-     * <pre> -L
-     *  Do not clean up after the tree has been built.</pre>
-     *
-     * <pre> -A
-     *  Laplace smoothing for predicted probabilities.</pre>
-     *
-     * <pre> -Q &lt;seed&gt;
-     *  Seed for random data shuffling (default 1).</pre>
-     *
-     * <!-- options-end -->
-     *
-     * @param options the list of options as an array of strings
-     * @throws Exception if an option is not supported
-     */
     public void setOptions(String[] options) throws Exception {
 
         // Other options
