@@ -182,7 +182,6 @@ public class WekaAccess {
 			  System.out.println("Reading J48 Model...");
 			  C = new J48();
 			  C = (Classifier) weka.core.SerializationHelper.read(fileLocation);
-
 			  break;
 		    case "NB":
 			  System.out.println("Reading NaiveBayes Model...");
@@ -234,14 +233,14 @@ public class WekaAccess {
 		    model = new myId3();
 		    break;
 		case 5:
-		    model = new J48();
-		    options[0] = "weka.classifiers.trees.j48"
-			  + "-C 0.25 -M 2";
-		    try {
-			  model.setOptions(options);
-		    } catch (Exception E) {
-			  E.printStackTrace();
-		    }
+		    model = new myJ48();
+//		    options[0] = "weka.classifiers.trees.j48"
+//			  + "-C 0.25 -M 2";
+//		    try {
+//			  model.setOptions(options);
+//		    } catch (Exception E) {
+//			  E.printStackTrace();
+//		    }
 		    break;
 	  }
 
