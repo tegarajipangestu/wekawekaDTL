@@ -233,11 +233,6 @@ public class MyJ48ClassifierTree {
         return (double) maxIndex;
     }
 
-    /**
-     * Cleanup in order to save memory.
-     *
-     * @param justHeaderInfo
-     */
     public final void cleanup(Instances justHeaderInfo) {
 
         trainInstances = justHeaderInfo;
@@ -249,14 +244,6 @@ public class MyJ48ClassifierTree {
         }
     }
 
-    /**
-     * Returns class probabilities for a weighted instance.
-     *
-     * @param instance the instance to get the distribution for
-     * @param useLaplace whether to use laplace or not
-     * @return the distribution
-     * @throws Exception if something goes wrong
-     */
     public final double[] distributionForInstance(Instance instance,
             boolean useLaplace)
             throws Exception {
