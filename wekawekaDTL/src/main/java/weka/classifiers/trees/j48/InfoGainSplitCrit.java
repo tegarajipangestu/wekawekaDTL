@@ -119,4 +119,8 @@ public final class InfoGainSplitCrit
   public String getRevision() {
     return RevisionUtils.extract("$Revision: 1.10 $");
   }
+
+    public double oldEnt(weka.classifiers.trees.myj48.Distribution m_distribution) {
+        throw new UnsupportedOperationException("Not supported yet."); //To change body of generated methods, choose Tools | Templates.
+    }
 }

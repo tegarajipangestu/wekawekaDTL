@@ -12,6 +12,7 @@ package weka.classifiers.trees.myj48;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
+import weka.classifiers.trees.j48.NoSplit;
 import weka.core.Attribute;
 import weka.core.Instance;
 import weka.core.Instances;
@@ -185,7 +186,13 @@ public class MyJ48ClassifierTree {
         return parent;
     }
 
-    public Instances MyNumerictoNominal(Instances instances) {
+    public Instances MyNumerictoNominal(Instances instances, int index) {
+        Instances localInstances = instances; 
+        localInstances.sort(index);
+        if (localInstances.attribute(index).isNumeric())
+        {
+            
+        }
         return null;
     }
 
@@ -193,9 +200,9 @@ public class MyJ48ClassifierTree {
 
         double minResult;
         double currentResult;
-        C45Split[] currentModel;
-        C45Split bestModel = null;
-        NoSplit noSplitModel = null;
+        MyJ48Split[] currentModel;
+        MyJ48Split bestModel = null;
+        ClassifierSplitModel noSplitModel = null;
         double averageInfoGain = 0;
         int validModels = 0;
         boolean multiVal = true;
@@ -207,7 +214,7 @@ public class MyJ48ClassifierTree {
         try {
 
             checkDistribution = new Distribution(data);
-            noSplitModel = new NoSplit(checkDistribution);
+            int m_minNoObj = 0;
             if (Utils.sm(checkDistribution.total(), 2 * m_minNoObj)
                     || Utils.eq(checkDistribution.total(),
                             checkDistribution.perClass(checkDistribution.maxClass()))) {
@@ -227,14 +234,14 @@ public class MyJ48ClassifierTree {
                 }
             }
 
-            currentModel = new C45Split[data.numAttributes()];
+            currentModel = new MyJ48Split[data.numAttributes()];
             sumOfWeights = data.sumOfWeights();
 
             for (i = 0; i < data.numAttributes(); i++) {
 
                 if (i != (data).classIndex()) {
 
-                    currentModel[i] = new C45Split(i, data, sumOfWeights);
+                    currentModel[i] = new MyJ48Split(i, data, sumOfWeights);
                     currentModel[i].buildClassifier(data);
 
                     if (currentModel[i].checkModel()) {
@@ -280,6 +287,7 @@ public class MyJ48ClassifierTree {
 
             bestModel.distribution().
                     addInstWithUnknown(data, bestModel.attIndex());
+            Instances m_allData = data;
 
             if (m_allData != null) {
                 bestModel.setSplitPoint(m_allData);
