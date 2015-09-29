@@ -12,6 +12,7 @@ package weka.classifiers.trees.myj48;
 import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
+import weka.classifiers.rules.ZeroR;
 import weka.classifiers.trees.Id3;
 import weka.core.Attribute;
 import weka.core.Capabilities;
@@ -62,6 +63,26 @@ public class MyJ48ClassifierTree {
 
     protected String currentClass;
 
+        /**
+     * True if the tree is to be pruned.
+     */
+    boolean m_pruneTheTree = false;
+
+    /**
+     * The confidence factor for pruning.
+     */
+    float m_CF = 0.25f;
+
+    /**
+     * Is subtree raising to be performed?
+     */
+    boolean m_subtreeRaising = true;
+
+    /**
+     * Cleanup after the tree has been built.
+     */
+    boolean m_cleanup = true;
+    
     /**
      * Constructor.
      */
@@ -166,34 +187,91 @@ public class MyJ48ClassifierTree {
         }
     }
 
-    public String getMajorityClassinParent() {
-        Instances instances = parent.trainInstances;
-        int numClassAttribute = instances.numDistinctValues(instances.classIndex());
-        instances.sort(instances.classIndex());
+    public void prune() throws Exception {
 
-        return null;
+        double errorsLargestBranch;
+        double errorsLeaf;
+        double errorsTree;
+        int indexOfLargestBranch;
+        C45PruneableClassifierTree largestBranch;
+        int i;
+
+        if (!isLeaf) {
+
+            // Prune all subtrees.
+            for (i = 0; i < child.length; i++) {
+                son(i).prune();
+            }
+
+            // Compute error for largest branch
+            indexOfLargestBranch = localModel().distribution().maxBag();
+            if (m_subtreeRaising) {
+                errorsLargestBranch = son(indexOfLargestBranch).
+                        getEstimatedErrorsForBranch((Instances) trainInstances);
+            } else {
+                errorsLargestBranch = Double.MAX_VALUE;
+            }
+
+            // Compute error if this Tree would be leaf
+            errorsLeaf
+                    = getEstimatedErrorsForDistribution(localModel().distribution());
+
+            // Compute error for the whole subtree
+            errorsTree = getEstimatedErrors();
+
+            // Decide if leaf is best choice.
+            if (Utils.smOrEq(errorsLeaf, errorsTree + 0.1)
+                    && Utils.smOrEq(errorsLeaf, errorsLargestBranch + 0.1)) {
+
+                // Free son Trees
+                child = null;
+                isLeaf = true;
+
+                // Get NoSplit Model for node.
+                m_localModel = new NoSplit(localModel().distribution());
+                return;
+            }
+
+            // Decide if largest branch is better choice
+            // than whole subtree.
+            if (Utils.smOrEq(errorsLargestBranch, errorsTree + 0.1)) {
+                largestBranch = son(indexOfLargestBranch);
+                child = largestBranch.child;
+                m_localModel = largestBranch.localModel();
+                isLeaf = largestBranch.isLeaf;
+                newDistribution(trainInstances);
+                prune();
+            }
+        }
     }
 
-    public String getMajorityClass(Instances _instances) {
+    public String getMajorityClassinParent() throws Exception {
+        Instances instances = parent.trainInstances;
+
+        return getMajorityClass(instances);
+    }
+
+    public String getMajorityClass(Instances _instances) throws Exception {
         int indexClass = _instances.classIndex();
         Instances instances = _instances;
         instances.sort(indexClass);
         List<String> className = new ArrayList<String>();
-        className.add(instances.instance(0).attribute(indexClass).value(0));
-        instances.delete(0);
-
-        while (instances.enumerateInstances().hasMoreElements())
-        {
-            if (instances.instance(0).attribute(indexClass).value(0)==instances.instance(0).attribute(indexClass).value(1))
-            {
-                
+        for (int i = 0; i < instances.numInstances() - 1; i++) {
+            int size = 0;
+            if (instances.instance(i).value(indexClass) != instances.instance(i + 1).value(indexClass)) {
+                className.add(instances.instance(i).stringValue(indexClass));
             }
         }
-        return null;
+
+        return instances.instance(0).stringValue(indexClass);
     }
 
     public MyJ48ClassifierTree getParent() {
         return parent;
+    }
+
+    public Instances MyNumerictoNominal(Instances instances) {
+        return null;
     }
 
     public void buildTree(Instances data, boolean keepData) throws Exception {
@@ -215,8 +293,7 @@ public class MyJ48ClassifierTree {
             currentClass = data.classAttribute().value(0);
 
         } else if (isEmptyInstances(data)) {
-            
-
+            currentClass = getMajorityClassinParent();
         } else {
             localInstances = split(data);
             for (int i = 0; i < localInstances.length; i++) {
@@ -226,7 +303,6 @@ public class MyJ48ClassifierTree {
 
     }
 
-    
     public double classifyInstance(Instance instance)
             throws Exception {
 
