@@ -63,26 +63,6 @@ public class MyJ48ClassifierTree {
 
     protected String currentClass;
 
-        /**
-     * True if the tree is to be pruned.
-     */
-    boolean m_pruneTheTree = false;
-
-    /**
-     * The confidence factor for pruning.
-     */
-    float m_CF = 0.25f;
-
-    /**
-     * Is subtree raising to be performed?
-     */
-    boolean m_subtreeRaising = true;
-
-    /**
-     * Cleanup after the tree has been built.
-     */
-    boolean m_cleanup = true;
-    
     /**
      * Constructor.
      */
@@ -187,67 +167,9 @@ public class MyJ48ClassifierTree {
         }
     }
 
-    public void prune() throws Exception {
-
-        double errorsLargestBranch;
-        double errorsLeaf;
-        double errorsTree;
-        int indexOfLargestBranch;
-        C45PruneableClassifierTree largestBranch;
-        int i;
-
-        if (!isLeaf) {
-
-            // Prune all subtrees.
-            for (i = 0; i < child.length; i++) {
-                son(i).prune();
-            }
-
-            // Compute error for largest branch
-            indexOfLargestBranch = localModel().distribution().maxBag();
-            if (m_subtreeRaising) {
-                errorsLargestBranch = son(indexOfLargestBranch).
-                        getEstimatedErrorsForBranch((Instances) trainInstances);
-            } else {
-                errorsLargestBranch = Double.MAX_VALUE;
-            }
-
-            // Compute error if this Tree would be leaf
-            errorsLeaf
-                    = getEstimatedErrorsForDistribution(localModel().distribution());
-
-            // Compute error for the whole subtree
-            errorsTree = getEstimatedErrors();
-
-            // Decide if leaf is best choice.
-            if (Utils.smOrEq(errorsLeaf, errorsTree + 0.1)
-                    && Utils.smOrEq(errorsLeaf, errorsLargestBranch + 0.1)) {
-
-                // Free son Trees
-                child = null;
-                isLeaf = true;
-
-                // Get NoSplit Model for node.
-                m_localModel = new NoSplit(localModel().distribution());
-                return;
-            }
-
-            // Decide if largest branch is better choice
-            // than whole subtree.
-            if (Utils.smOrEq(errorsLargestBranch, errorsTree + 0.1)) {
-                largestBranch = son(indexOfLargestBranch);
-                child = largestBranch.child;
-                m_localModel = largestBranch.localModel();
-                isLeaf = largestBranch.isLeaf;
-                newDistribution(trainInstances);
-                prune();
-            }
-        }
-    }
-
     public String getMajorityClassinParent() throws Exception {
         Instances instances = parent.trainInstances;
-
+        
         return getMajorityClass(instances);
     }
 
@@ -262,7 +184,7 @@ public class MyJ48ClassifierTree {
                 className.add(instances.instance(i).stringValue(indexClass));
             }
         }
-
+        
         return instances.instance(0).stringValue(indexClass);
     }
 
@@ -270,10 +192,10 @@ public class MyJ48ClassifierTree {
         return parent;
     }
 
-    public Instances MyNumerictoNominal(Instances instances) {
+    public Instances MyNumerictoNominal (Instances instances)
+    {
         return null;
     }
-
     public void buildTree(Instances data, boolean keepData) throws Exception {
 
         Instances[] localInstances;
