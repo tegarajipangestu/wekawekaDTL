@@ -154,7 +154,16 @@ import java.util.Vector;
       throw new Exception ("Can't handle missing value(s)");
     }
     if (split_attribute == null) {
-      return leaf_class;
+        {
+            if(!Utils.eq(leaf_class,Double.NaN))
+                return leaf_class;
+            else
+            {
+                //return instance.classAttribute().;
+                Enumeration a = instance.enumerateAttributes();
+                return instance.value(class_attribute);
+            }
+        }
     } else {
       return child[(int) instance.value(split_attribute)].
         classifyInstance(instance);
