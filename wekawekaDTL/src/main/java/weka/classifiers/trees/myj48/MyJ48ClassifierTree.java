@@ -60,7 +60,7 @@ public class MyJ48ClassifierTree {
      */
     protected int idNode;
 
-    protected Attribute currentClass;
+    protected String currentClass;
 
     /**
      * Constructor.
@@ -151,7 +151,7 @@ public class MyJ48ClassifierTree {
         m_Distribution = new double[data.numClasses()];
         double[] infoGains = new double[data.numAttributes()];
         Enumeration attEnum = data.enumerateAttributes();
-        
+
         while (attEnum.hasMoreElements()) {
             Attribute att = (Attribute) attEnum.nextElement();
             infoGains[att.index()] = computeInfoGain(data, att);
@@ -166,11 +166,17 @@ public class MyJ48ClassifierTree {
         }
     }
 
-    public Attribute getMajorityClassinParent() {
+    public String getMajorityClassinParent() {
         Instances instances = parent.trainInstances;
         int numClassAttribute = instances.numDistinctValues(instances.classIndex());
         instances.sort(instances.classIndex());
 
+        return null;
+    }
+
+    public String getMajorityClass(Instances instances) {
+        int indexClass = instances.classIndex();
+        Instances localInstances = instances;
         return null;
     }
 
@@ -194,13 +200,16 @@ public class MyJ48ClassifierTree {
 
         if (isSingleClass(data)) {
             isLeaf = true;
-            currentClass = data.classAttribute();
+            currentClass = data.classAttribute().value(0);
 
         } else if (isEmptyInstances(data)) {
             //Class Majority in parent
 
         } else {
-
+            localInstances = split(data);
+            for (int i = 0; i < localInstances.length; i++) {
+                buildTree(localInstances[i], keepData);
+            }
         }
 
     }
@@ -291,44 +300,6 @@ public class MyJ48ClassifierTree {
      */
     public int graphType() {
         return Drawable.TREE;
-    }
-
-    /**
-     * Returns graph describing the tree.
-     *
-     * @throws Exception if something goes wrong
-     * @return the tree as graph
-     */
-    public String graph() throws Exception {
-
-        StringBuffer text = new StringBuffer();
-
-        assignIDs(-1);
-        text.append("digraph J48Tree {\n");
-        if (isLeaf) {
-            text.append("N" + idNode
-                    + " [label=\""
-                    + Utils.quote(m_localModel.dumpLabel(0, trainInstances)) + "\" "
-                    + "shape=box style=filled ");
-            if (trainInstances != null && trainInstances.numInstances() > 0) {
-                text.append("data =\n" + trainInstances + "\n");
-                text.append(",\n");
-
-            }
-            text.append("]\n");
-        } else {
-            text.append("N" + idNode
-                    + " [label=\""
-                    + Utils.quote(m_localModel.leftSide(trainInstances)) + "\" ");
-            if (trainInstances != null && trainInstances.numInstances() > 0) {
-                text.append("data =\n" + trainInstances + "\n");
-                text.append(",\n");
-            }
-            text.append("]\n");
-            graphTree(text);
-        }
-
-        return text.toString() + "}\n";
     }
 
     /**
@@ -481,13 +452,6 @@ public class MyJ48ClassifierTree {
         }
     }
 
-    /**
-     * Returns a newly created tree.
-     *
-     * @param data the training data
-     * @return the generated tree
-     * @throws Exception if something goes wrong
-     */
     protected MyJ48ClassifierTree getNewTree(Instances data) throws Exception {
 
         MyJ48ClassifierTree newTree = new MyJ48ClassifierTree(m_toSelectModel);
@@ -496,14 +460,6 @@ public class MyJ48ClassifierTree {
         return newTree;
     }
 
-    /**
-     * Returns a newly created tree.
-     *
-     * @param train the training data
-     * @param test the pruning data.
-     * @return the generated tree
-     * @throws Exception if something goes wrong
-     */
     protected MyJ48ClassifierTree getNewTree(Instances train, Instances test)
             throws Exception {
 
@@ -513,13 +469,6 @@ public class MyJ48ClassifierTree {
         return newTree;
     }
 
-    /**
-     * Help method for printing tree structure.
-     *
-     * @param depth the current depth
-     * @param text for outputting the structure
-     * @throws Exception if something goes wrong
-     */
     private void dumpTree(int depth, StringBuffer text)
             throws Exception {
 
@@ -541,49 +490,6 @@ public class MyJ48ClassifierTree {
         }
     }
 
-    /**
-     * Help method for printing tree structure as a graph.
-     *
-     * @param text for outputting the tree
-     * @throws Exception if something goes wrong
-     */
-    private void graphTree(StringBuffer text) throws Exception {
-
-        for (int i = 0; i < child.length; i++) {
-            text.append("N" + idNode
-                    + "->"
-                    + "N" + child[i].idNode
-                    + " [label=\"" + Utils.quote(m_localModel.rightSide(i, trainInstances).trim())
-                    + "\"]\n");
-            if (child[i].isLeaf) {
-                text.append("N" + child[i].idNode
-                        + " [label=\"" + Utils.quote(m_localModel.dumpLabel(i, trainInstances)) + "\" "
-                        + "shape=box style=filled ");
-                if (trainInstances != null && trainInstances.numInstances() > 0) {
-                    text.append("data =\n" + child[i].trainInstances + "\n");
-                    text.append(",\n");
-                }
-                text.append("]\n");
-            } else {
-                text.append("N" + child[i].idNode
-                        + " [label=\"" + Utils.quote(child[i].m_localModel.leftSide(trainInstances))
-                        + "\" ");
-                if (trainInstances != null && trainInstances.numInstances() > 0) {
-                    text.append("data =\n" + child[i].trainInstances + "\n");
-                    text.append(",\n");
-                }
-                text.append("]\n");
-                child[i].graphTree(text);
-            }
-        }
-    }
-
-    /**
-     * Prints the tree in prefix form
-     *
-     * @param text the buffer to output the prefix form to
-     * @throws Exception if something goes wrong
-     */
     private void prefixTree(StringBuffer text) throws Exception {
 
         text.append("[");
