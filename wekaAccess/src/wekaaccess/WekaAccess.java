@@ -299,6 +299,8 @@ public class WekaAccess {
                 }
 
                 System.out.println(eval.toSummaryString());
+		    System.out.println(eval.toClassDetailsString());
+		    System.out.println(eval.toMatrixString());
 
             } catch (Exception E) {
                 E.printStackTrace();
@@ -314,6 +316,8 @@ public class WekaAccess {
                 }
 
                 System.out.println(eval.toSummaryString());
+		    System.out.println(eval.toClassDetailsString());
+		    System.out.println(eval.toMatrixString());
             } catch (Exception E) {
                 E.printStackTrace();
             }
@@ -326,6 +330,9 @@ public class WekaAccess {
     }
 
     public static void loadTestData() {
+	  
+	  System.out.println("Masukkan path file dataset:");
+	  System.out.print("### > ");
         String testDataLocation = (new Scanner(System.in)).nextLine();
 
         System.out.println("Mengambil test dataset...");
