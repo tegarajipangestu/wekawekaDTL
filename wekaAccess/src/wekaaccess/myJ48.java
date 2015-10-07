@@ -5,7 +5,6 @@
  */
 package wekaaccess;
 
-import java.util.Collections;
 import weka.classifiers.Classifier;
 import weka.core.Attribute;
 import weka.core.Capabilities;
@@ -15,12 +14,11 @@ import weka.core.Utils;
 import weka.core.Capabilities.Capability;
 
 import java.util.Enumeration;
-import java.util.Vector;
-import weka.classifiers.trees.J48;
+import weka.core.AttributeStats;
 
 /**
  *
- * @author tegar
+ * @author Ivana Clairine
  */
 public class myJ48
         extends Classifier {
@@ -56,15 +54,19 @@ public class myJ48
     private Attribute class_attribute;
 
     public Capabilities getCapabilities() {
-        Capabilities result = super.getCapabilities();
+        Capabilities result = new Capabilities(this);
         result.disableAll();
-
         // attributes
-        result.enable(Capability.NOMINAL_ATTRIBUTES);
+        result.enable(Capabilities.Capability.NOMINAL_ATTRIBUTES);
+        result.enable(Capabilities.Capability.NUMERIC_ATTRIBUTES);
+        result.enable(Capabilities.Capability.MISSING_VALUES);
 
+        
+        result.enable(Capabilities.Capability.MISSING_VALUES);
+        
         // class
-        result.enable(Capability.NOMINAL_CLASS);
-        result.enable(Capability.MISSING_CLASS_VALUES);
+        result.enable(Capabilities.Capability.NOMINAL_CLASS);
+        result.enable(Capabilities.Capability.MISSING_CLASS_VALUES);
 
         // instances
         result.setMinimumNumberInstances(0);
@@ -77,9 +79,8 @@ public class myJ48
         // can classifier handle the data?
         getCapabilities().testWithFail(data);
 
-        // remove instances with missing class
-        data = new Instances(data);
-        data.deleteWithMissingClass();
+        // handling missing value
+        handleMissingValue(data);
 
         makeTree(data);
     }
@@ -104,27 +105,69 @@ public class myJ48
         return max;
     }
 
+    private void handleMissingValue(Instances data) {
+        
+        Enumeration attrEnum = data.enumerateAttributes();
+        while (attrEnum.hasMoreElements()) {
+            Attribute attr = (Attribute) attrEnum.nextElement();
+            //Handling nominal, just assign it with majority class
+            if (attr.isNominal()) {
+                AttributeStats attributeStats = data.attributeStats(attr.index());
+                int maxIndex = 0;
+                for (int i = 1; i < attr.numValues(); i++) {
+                    if (attributeStats.nominalCounts[maxIndex] < attributeStats.nominalCounts[i]) {
+                        maxIndex = i;
+                    }
+                }
+                Enumeration instEnum = data.enumerateInstances();
+                while (instEnum.hasMoreElements()) {
+                    Instance instance = (Instance) instEnum.nextElement();
+                    if (instance.isMissing(attr.index())) {
+                        instance.setValue(attr.index(), maxIndex);
+                    }
+                }
+            } 
+            //Handling numeric, just assign it with mean of attribute's instances
+            else if (attr.isNumeric()) {
+                AttributeStats attributeStats = data.attributeStats(attr.index());
+                double mean = attributeStats.numericStats.mean;
+                if (Double.isNaN(mean)) {
+                    mean = 0;
+                }
+                Enumeration instEnumerate = data.enumerateInstances();
+                while (instEnumerate.hasMoreElements()) {
+                    Instance instance = (Instance) instEnumerate.nextElement();
+                    if (instance.isMissing(attr.index())) {
+                        instance.setValue(attr.index(), mean);
+                    }
+                }
+            }
+        }
+    }
+
     private void makeTree(Instances data) throws Exception {
         // Check if no instances have reached this node.
         if (data.numInstances() == 0) {
             split_attribute = null;
-            leaf_class = maxAttr(data, data.attribute(0));
+            leaf_class = Double.NaN;
             leaf_distribution = new double[data.numClasses()];
             return;
         }
 
-        // Compute attribute with maximum gainRatio.
-        double[] gainRatio = new double[data.numAttributes()];
+        // Compute attribute with maximum information gain.
+        double[] infoGains = new double[data.numAttributes()];
+        double[] GainRatio = new double[data.numAttributes()];
         Enumeration attEnum = data.enumerateAttributes();
         while (attEnum.hasMoreElements()) {
             Attribute att = (Attribute) attEnum.nextElement();
-            gainRatio[att.index()] = computeInfoGain(data, att);
+            infoGains[att.index()] = computeInfoGain(data, att);
+            GainRatio[att.index()] = computeInfoGain(data, att) / hitungEntropy(data);
         }
-        split_attribute = data.attribute(Utils.maxIndex(gainRatio));
+        split_attribute = data.attribute(Utils.maxIndex(infoGains));
 
         // Make leaf if information gain is zero. 
         // Otherwise create successors.
-        if (Utils.eq(gainRatio[split_attribute.index()], 0)) {
+        if (Utils.eq(infoGains[split_attribute.index()], 0)) {
             split_attribute = null;
             leaf_distribution = new double[data.numClasses()];
             Enumeration instEnum = data.enumerateInstances();
@@ -134,6 +177,7 @@ public class myJ48
             }
             Utils.normalize(leaf_distribution);
             leaf_class = Utils.maxIndex(leaf_distribution);
+            //leaf_class = maxAttr(data, split_attribute);
             class_attribute = data.classAttribute();
         } else {
             Instances[] splitData = splitData(data, split_attribute);
@@ -141,6 +185,9 @@ public class myJ48
             for (int j = 0; j < split_attribute.numValues(); j++) {
                 child[j] = new myJ48();
                 child[j].makeTree(splitData[j]);
+                if (Utils.eq(splitData[j].numInstances(), 0)) {
+                    child[j].leaf_class = maxAttr(data, data.attribute(j));
+                }
             }
         }
     }
@@ -152,7 +199,15 @@ public class myJ48
             throw new Exception("Can't handle missing value(s)");
         }
         if (split_attribute == null) {
-            return leaf_class;
+            {
+                if (!Utils.eq(leaf_class, Double.NaN)) {
+                    return leaf_class;
+                } else {
+                    //return instance.classAttribute().;
+                    Enumeration a = instance.enumerateAttributes();
+                    return instance.value(class_attribute);
+                }
+            }
         } else {
             return child[(int) instance.value(split_attribute)].
                     classifyInstance(instance);
@@ -162,7 +217,6 @@ public class myJ48
     @Override
     public double[] distributionForInstance(Instance instance)
             throws Exception {
-
         if (instance.hasMissingValue()) {
             throw new Exception("Can't handle missing value(s)");
         }
@@ -187,24 +241,6 @@ public class myJ48
             }
         }
         return infoGain;
-    }
-
-    private double computeEntropy(Instances data) throws Exception {
-
-        double[] classCounts = new double[data.numClasses()];
-        Enumeration instEnum = data.enumerateInstances();
-        while (instEnum.hasMoreElements()) {
-            Instance inst = (Instance) instEnum.nextElement();
-            classCounts[(int) inst.classValue()]++;
-        }
-        double entropy = 0;
-        for (int j = 0; j < data.numClasses(); j++) {
-            if (classCounts[j] > 0) {
-                entropy -= classCounts[j] * Utils.log2(classCounts[j]);
-            }
-        }
-        entropy /= (double) data.numInstances();
-        return entropy + Utils.log2(data.numInstances());
     }
 
     private double hitungEntropy(Instances data) {
@@ -242,104 +278,4 @@ public class myJ48
         return splitData;
     }
 
-    /**
-     * Outputs a tree at a certain level.
-     *
-     * @param level the level at which the tree is to be printed
-     * @return the tree as string at the given level
-     */
-    private String toString(int level) {
-
-        StringBuffer text = new StringBuffer();
-
-        if (split_attribute == null) {
-            if (Instance.isMissingValue(leaf_class)) {
-                text.append(": null");
-            } else {
-                text.append(": " + class_attribute.value((int) leaf_class));
-            }
-        } else {
-            for (int j = 0; j < split_attribute.numValues(); j++) {
-                text.append("\n");
-                for (int i = 0; i < level; i++) {
-                    text.append("|  ");
-                }
-                text.append(split_attribute.name() + " = " + split_attribute.value(j));
-                text.append(child[j].toString(level + 1));
-            }
-        }
-        return text.toString();
-    }
-
-    /**
-     * Adds this tree recursively to the buffer.
-     *
-     * @param id the unqiue id for the method
-     * @param buffer the buffer to add the source code to
-     * @return the last ID being used
-     * @throws Exception if something goes wrong
-     */
-    protected int toSource(int id, StringBuffer buffer) throws Exception {
-        int result;
-        int i;
-        int newID;
-        StringBuffer[] subBuffers;
-
-        buffer.append("\n");
-        buffer.append("  protected static double node" + id + "(Object[] i) {\n");
-
-        // leaf?
-        if (split_attribute == null) {
-            result = id;
-            if (Double.isNaN(leaf_class)) {
-                buffer.append("    return Double.NaN;");
-            } else {
-                buffer.append("    return " + leaf_class + ";");
-            }
-            if (class_attribute != null) {
-                buffer.append(" // " + class_attribute.value((int) leaf_class));
-            }
-            buffer.append("\n");
-            buffer.append("  }\n");
-        } else {
-            buffer.append("    checkMissing(i, " + split_attribute.index() + ");\n\n");
-            buffer.append("    // " + split_attribute.name() + "\n");
-
-            // subtree calls
-            subBuffers = new StringBuffer[split_attribute.numValues()];
-            newID = id;
-            for (i = 0; i < split_attribute.numValues(); i++) {
-                newID++;
-
-                buffer.append("    ");
-                if (i > 0) {
-                    buffer.append("else ");
-                }
-                buffer.append("if (((String) i[" + split_attribute.index()
-                        + "]).equals(\"" + split_attribute.value(i) + "\"))\n");
-                buffer.append("      return node" + newID + "(i);\n");
-
-                subBuffers[i] = new StringBuffer();
-                newID = child[i].toSource(newID, subBuffers[i]);
-            }
-            buffer.append("    else\n");
-            buffer.append("      throw new IllegalArgumentException(\"Value '\" + i["
-                    + split_attribute.index() + "] + \"' is not allowed!\");\n");
-            buffer.append("  }\n");
-
-            // output subtree code
-            for (i = 0; i < split_attribute.numValues(); i++) {
-                buffer.append(subBuffers[i].toString());
-            }
-            subBuffers = null;
-
-            result = newID;
-        }
-
-        return result;
-    }
-
-    public static void main(String[] args) {
-        runClassifier(new J48(), args);
-    }
 }

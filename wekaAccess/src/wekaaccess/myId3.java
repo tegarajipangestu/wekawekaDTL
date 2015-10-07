@@ -121,7 +121,7 @@ public class myId3
 	  }
 	  split_attribute = data.attribute(Utils.maxIndex(infoGains));
 
-    // Make leaf if information gain is zero. 
+          // Make leaf if information gain is zero. 
 	  // Otherwise create successors.
 	  if (Utils.eq(infoGains[split_attribute.index()], 0)) {
 		split_attribute = null;

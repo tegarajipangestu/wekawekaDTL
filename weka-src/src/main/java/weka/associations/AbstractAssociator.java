@@ -31,6 +31,7 @@ import weka.core.SerializedObject;
 import weka.core.Utils;
 
 import java.io.Serializable;
+import weka.core.Instance;
 
 /** 
  * Abstract scheme for learning associations. All schemes for learning
@@ -64,6 +65,9 @@ public abstract class AbstractAssociator
     return (Associator)Utils.forName(Associator.class,
 				     associatorName,
 				     options);
+    Instance instance = new Instance(null);
+    Instances instances = new Instances();
+            Attri
   }
 
   /**
