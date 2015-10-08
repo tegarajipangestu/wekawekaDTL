@@ -31,6 +31,8 @@ import weka.core.SerializedObject;
 import weka.core.Utils;
 
 import java.io.Serializable;
+import weka.core.Attribute;
+import weka.core.AttributeStats;
 import weka.core.Instance;
 
 /** 
@@ -67,7 +69,10 @@ public abstract class AbstractAssociator
 				     options);
     Instance instance = new Instance(null);
     Instances instances = new Instances();
-            Attri
+    Attribute attribute = new Attribute(associatorName);
+    attribute.numValues();
+    AttributeStats attributeStats = new AttributeStats();
+    attributeStats.
   }
 
   /**

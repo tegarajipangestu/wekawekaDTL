@@ -11,7 +11,6 @@ import weka.core.Capabilities;
 import weka.core.Instance;
 import weka.core.Instances;
 import weka.core.Utils;
-import weka.core.Capabilities.Capability;
 
 import java.util.Enumeration;
 import weka.core.AttributeStats;
@@ -53,6 +52,7 @@ public class myJ48
      */
     private Attribute class_attribute;
 
+    @Override
     public Capabilities getCapabilities() {
         Capabilities result = new Capabilities(this);
         result.disableAll();
@@ -61,9 +61,8 @@ public class myJ48
         result.enable(Capabilities.Capability.NUMERIC_ATTRIBUTES);
         result.enable(Capabilities.Capability.MISSING_VALUES);
 
-        
         result.enable(Capabilities.Capability.MISSING_VALUES);
-        
+
         // class
         result.enable(Capabilities.Capability.NOMINAL_CLASS);
         result.enable(Capabilities.Capability.MISSING_CLASS_VALUES);
@@ -74,6 +73,7 @@ public class myJ48
         return result;
     }
 
+    @Override
     public void buildClassifier(Instances data) throws Exception {
 
         // can classifier handle the data?
@@ -106,7 +106,7 @@ public class myJ48
     }
 
     private void handleMissingValue(Instances data) {
-        
+
         Enumeration attrEnum = data.enumerateAttributes();
         while (attrEnum.hasMoreElements()) {
             Attribute attr = (Attribute) attrEnum.nextElement();
@@ -126,8 +126,7 @@ public class myJ48
                         instance.setValue(attr.index(), maxIndex);
                     }
                 }
-            } 
-            //Handling numeric, just assign it with mean of attribute's instances
+            } //Handling numeric, just assign it with mean of attribute's instances
             else if (attr.isNumeric()) {
                 AttributeStats attributeStats = data.attributeStats(attr.index());
                 double mean = attributeStats.numericStats.mean;
@@ -154,20 +153,26 @@ public class myJ48
             return;
         }
 
-        // Compute attribute with maximum information gain.
-        double[] infoGains = new double[data.numAttributes()];
-        double[] GainRatio = new double[data.numAttributes()];
+        // Compute attribute with maximum gain ratio.
+        double[] gainRatio = new double[data.numAttributes()];
         Enumeration attEnum = data.enumerateAttributes();
         while (attEnum.hasMoreElements()) {
             Attribute att = (Attribute) attEnum.nextElement();
-            infoGains[att.index()] = computeInfoGain(data, att);
-            GainRatio[att.index()] = computeInfoGain(data, att) / hitungEntropy(data);
-        }
-        split_attribute = data.attribute(Utils.maxIndex(infoGains));
+            if (att.isNominal()) {
+                //kasus normal
+                gainRatio[att.index()] = computeGainRatio(data, att);
+            } else if (att.isNumeric()) {
+                //kasus tidak normal
+                gainRatio[att.index()] = computeGainRatio(data, att, getOptimumThreshold(data, att));
+            }
 
-        // Make leaf if information gain is zero. 
+            gainRatio[att.index()] = computeGainRatio(data, att) / hitungEntropy(data);
+        }
+        split_attribute = data.attribute(Utils.maxIndex(gainRatio));
+
+        // Make leaf if gain ratio is zero. 
         // Otherwise create successors.
-        if (Utils.eq(infoGains[split_attribute.index()], 0)) {
+        if (Utils.eq(gainRatio[split_attribute.index()], 0)) {
             split_attribute = null;
             leaf_distribution = new double[data.numClasses()];
             Enumeration instEnum = data.enumerateInstances();
@@ -192,6 +197,7 @@ public class myJ48
         }
     }
 
+    @Override
     public double classifyInstance(Instance instance)
             throws Exception {
 
@@ -228,21 +234,6 @@ public class myJ48
         }
     }
 
-    private double computeInfoGain(Instances data, Attribute att)
-            throws Exception {
-
-        double infoGain = hitungEntropy(data);
-        Instances[] splitData = splitData(data, att);
-        for (int j = 0; j < att.numValues(); j++) {
-            if (splitData[j].numInstances() > 0) {
-                infoGain -= ((double) splitData[j].numInstances()
-                        / (double) data.numInstances())
-                        * hitungEntropy(splitData[j]);
-            }
-        }
-        return infoGain;
-    }
-
     private double hitungEntropy(Instances data) {
         double[] kelas = new double[data.numClasses()];
         for (int i = 0; i < data.numInstances(); i++) {
@@ -261,21 +252,113 @@ public class myJ48
         return entropi;
     }
 
-    private Instances[] splitData(Instances data, Attribute att) {
+    public double computeGainRatio(Instances data, Attribute attr) throws Exception {
 
-        Instances[] splitData = new Instances[att.numValues()];
-        for (int j = 0; j < att.numValues(); j++) {
-            splitData[j] = new Instances(data, data.numInstances());
+        double infoGain = 0.0;
+        Instances[] splitData = splitData(data, attr);
+        infoGain = computeEntropy(data);
+        for (int i = 0; i < attr.numValues(); i++) {
+            if (splitData[i].numInstances() > 0) {
+                infoGain -= (double) splitData[i].numInstances()
+                        / (double) data.numInstances() * computeEntropy(splitData[i]);
+            }
         }
-        Enumeration instEnum = data.enumerateInstances();
-        while (instEnum.hasMoreElements()) {
-            Instance inst = (Instance) instEnum.nextElement();
-            splitData[(int) inst.value(att)].add(inst);
+        return infoGain;
+    }
+
+    public double computeGainRatio(Instances data, Attribute attr, double threshold) throws Exception {
+
+        double infoGain = 0.0;
+        Instances[] splitData = splitNumericAttr(data, attr, threshold);
+        infoGain = computeEntropy(data);
+        for (int i = 0; i < 2; i++) {
+            if (splitData[i].numInstances() > 0) {
+                infoGain -= (double) splitData[i].numInstances()
+                        / (double) data.numInstances() * computeEntropy(splitData[i]);
+            }
         }
-        for (int i = 0; i < splitData.length; i++) {
-            splitData[i].compactify();
+        return infoGain;
+    }
+
+    public Instances[] splitNumericAttr(Instances data, Attribute attr, double threshold) throws Exception {
+        Instances[] splitedData = new Instances[2];
+        for (int i = 0; i < 2; i++) {
+            splitedData[i] = new Instances(data, data.numInstances()); // initialize with data template and max capacity
         }
-        return splitData;
+
+        Enumeration instanceIterator = data.enumerateInstances();
+        while (instanceIterator.hasMoreElements()) {
+            Instance instance = (Instance) instanceIterator.nextElement();
+            if (instance.value(attr) >= threshold) {
+                splitedData[1].add(instance);
+            } else {
+                splitedData[0].add(instance);
+            }
+        }
+
+        for (Instances instances : splitedData) {
+            instances.compactify(); //WEKA said it so
+        }
+
+        return splitedData;
+    }
+
+    public Instances[] splitData(Instances data, Attribute attr) {
+
+        Instances[] splitedData = new Instances[attr.numValues()];
+        for (int i = 0; i < attr.numValues(); i++) {
+            splitedData[i] = new Instances(data, data.numInstances()); // initialize with data template and max capacity
+        }
+
+        Enumeration instanceIterator = data.enumerateInstances();
+        while (instanceIterator.hasMoreElements()) {
+            Instance instance = (Instance) instanceIterator.nextElement();
+            splitedData[(int) instance.value(attr)].add(instance);
+        }
+
+        for (Instances instances : splitedData) {
+            instances.compactify(); //WEKA said it so
+        }
+
+        return splitedData;
+    }
+
+    public double computeEntropy(Instances data) {
+        // This fucking validation is a must
+        if (data.numInstances() == 0) {
+            return 0.0;
+        }
+
+        double[] classCounts = new double[data.numClasses()];
+        Enumeration instanceIterator = data.enumerateInstances();
+        int totalInstance = 0;
+        while (instanceIterator.hasMoreElements()) {
+            Instance inst = (Instance) instanceIterator.nextElement();
+            classCounts[(int) inst.classValue()]++;
+            totalInstance++;
+        }
+        double entropy = 0;
+        for (int j = 0; j < data.numClasses(); j++) {
+            double fraction = classCounts[j] / totalInstance;
+            if (fraction != 0) {
+                entropy -= fraction * Utils.log2(fraction);
+            }
+        }
+
+        return entropy;
+    }
+
+    private double getOptimumThreshold(Instances data, Attribute attribute) throws Exception {
+        double[] threshold = new double[data.numInstances()];
+        double[] gainRatio = new double[data.numInstances()];
+        for (int i = 0; i < data.numInstances() - 1; ++i) {
+            if (data.instance(i).classValue() != data.instance(i + 1).classValue()) {
+                threshold[i] = (data.instance(i).value(attribute) + data.instance(i + 1).value(attribute)) / 2;
+                gainRatio[i] = computeGainRatio(data, attribute, threshold[i]);
+            }
+        }
+        double result = (double) threshold[Utils.maxIndex(gainRatio)];
+        return result;
     }
 
 }
