@@ -86,7 +86,7 @@ public class myJ48
     }
 
     public int maxAttr(Instances data, Attribute atr) {
-        Instances[] maxAttr = splitData(data, atr);
+        Instances[] maxAttr = myJ48.this.splitData(data, atr);
         int[] maxval = new int[atr.numValues()];
         for (int i = 0; i < data.numInstances(); i++) {
             Instance temp = data.instance(i);
@@ -165,8 +165,6 @@ public class myJ48
                 //kasus tidak normal
                 gainRatio[att.index()] = computeGainRatio(data, att, getOptimumThreshold(data, att));
             }
-
-            gainRatio[att.index()] = computeGainRatio(data, att) / hitungEntropy(data);
         }
         split_attribute = data.attribute(Utils.maxIndex(gainRatio));
 
@@ -185,7 +183,15 @@ public class myJ48
             //leaf_class = maxAttr(data, split_attribute);
             class_attribute = data.classAttribute();
         } else {
-            Instances[] splitData = splitData(data, split_attribute);
+            Instances[] splitData;
+            if (split_attribute.isNominal())
+            {
+                splitData = myJ48.this.splitData(data, split_attribute);                
+            }
+            else
+            {
+                splitData = splitData(data, split_attribute, getOptimumThreshold(data, split_attribute));
+            }
             child = new myJ48[split_attribute.numValues()];
             for (int j = 0; j < split_attribute.numValues(); j++) {
                 child[j] = new myJ48();
@@ -223,14 +229,19 @@ public class myJ48
     @Override
     public double[] distributionForInstance(Instance instance)
             throws Exception {
-        if (instance.hasMissingValue()) {
-            throw new Exception("Can't handle missing value(s)");
-        }
         if (split_attribute == null) {
             return leaf_distribution;
         } else {
-            return child[(int) instance.value(split_attribute)].
-                    distributionForInstance(instance);
+            if (split_attribute.isNominal())
+            {
+                return child[(int) instance.value(split_attribute)].
+                    distributionForInstance(instance);                
+            }
+            else if (split_attribute.isNumeric())
+            {
+                //something magic happens here, behold
+            }
+            return null;
         }
     }
 
@@ -255,7 +266,7 @@ public class myJ48
     public double computeGainRatio(Instances data, Attribute attr) throws Exception {
 
         double infoGain = 0.0;
-        Instances[] splitData = splitData(data, attr);
+        Instances[] splitData = myJ48.this.splitData(data, attr);
         infoGain = computeEntropy(data);
         for (int i = 0; i < attr.numValues(); i++) {
             if (splitData[i].numInstances() > 0) {
@@ -269,7 +280,7 @@ public class myJ48
     public double computeGainRatio(Instances data, Attribute attr, double threshold) throws Exception {
 
         double infoGain = 0.0;
-        Instances[] splitData = splitNumericAttr(data, attr, threshold);
+        Instances[] splitData = splitData(data, attr, threshold);
         infoGain = computeEntropy(data);
         for (int i = 0; i < 2; i++) {
             if (splitData[i].numInstances() > 0) {
@@ -280,7 +291,7 @@ public class myJ48
         return infoGain;
     }
 
-    public Instances[] splitNumericAttr(Instances data, Attribute attr, double threshold) throws Exception {
+    public Instances[] splitData(Instances data, Attribute attr, double threshold) throws Exception {
         Instances[] splitedData = new Instances[2];
         for (int i = 0; i < 2; i++) {
             splitedData[i] = new Instances(data, data.numInstances()); // initialize with data template and max capacity
@@ -307,7 +318,7 @@ public class myJ48
 
         Instances[] splitedData = new Instances[attr.numValues()];
         for (int i = 0; i < attr.numValues(); i++) {
-            splitedData[i] = new Instances(data, data.numInstances()); // initialize with data template and max capacity
+            splitedData[i] = new Instances(data, data.numInstances());
         }
 
         Enumeration instanceIterator = data.enumerateInstances();
