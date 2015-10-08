@@ -17,7 +17,7 @@ import weka.core.AttributeStats;
 
 /**
  *
- * @author Ivana Clairine
+ * @author tegar
  */
 public class myJ48
         extends Classifier {
