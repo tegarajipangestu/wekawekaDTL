@@ -415,7 +415,7 @@ public class myJ48
         return result;
     }
 
-    public double errorRate(Instances instances) throws Exception {
+    public double computeError(Instances instances) throws Exception {
         int correctInstances = 0;
         int incorrectInstances = 0;
         Enumeration enumeration = instances.enumerateInstances();
@@ -433,7 +433,7 @@ public class myJ48
     private void pruneTree() throws Exception {
         //Prepruning, prune before its too late, beybeh
         if (child != null) {
-            double currErrorRate = this.errorRate(instances);
+            double beforePruningError = this.computeError(instances);
 
             double[] classDistribution = new double[instances.numClasses()];
             Enumeration instanceEnum = instances.enumerateInstances();
@@ -455,8 +455,8 @@ public class myJ48
                     incorrectInstances++;
                 }
             }
-            double prunedErrorRate = (double) incorrectInstances / (double) (correctInstances + incorrectInstances);
-            if (currErrorRate > prunedErrorRate) {
+            double afterPruningError = (double) incorrectInstances / (double) (correctInstances + incorrectInstances);
+            if (beforePruningError > afterPruningError) {
                 System.out.println("Pruning, behold the power");
                 child = null;
                 split_attribute = null;
