@@ -37,6 +37,8 @@ public class WekaAccess {
 	  Scanner input = new Scanner(System.in);
 	  System.out.print("Input complete file location: ");
 	  String fileLocation = input.nextLine();
+          
+          fileLocation = "/home/tegar/Documents/code/repos/wekawekaDTL/wekaAccess/src/wekaaccess/weather.numeric.arff";
 
 	  if (fileLocation.endsWith(".csv") || fileLocation.endsWith(".arff")) {
 		try { // file arff/csv
@@ -233,13 +235,6 @@ public class WekaAccess {
 		    break;
 		case 5:
 		    model = new myJ48();
-//		    options[0] = "weka.classifiers.trees.j48"
-//			  + "-C 0.25 -M 2";
-//		    try {
-//			  model.setOptions(options);
-//		    } catch (Exception E) {
-//			  E.printStackTrace();
-//		    }
 		    break;
 	  }
 

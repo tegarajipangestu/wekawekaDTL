@@ -1,10 +1,10 @@
+package wekaaccess;
+
 /*
  * To change this license header, choose License Headers in Project Properties.
  * To change this template file, choose Tools | Templates
  * and open the template in the editor.
  */
-package wekaaccess;
-
 import weka.classifiers.Classifier;
 import weka.core.Attribute;
 import weka.core.Capabilities;
@@ -22,6 +22,9 @@ import weka.core.AttributeStats;
 public class myJ48
         extends Classifier {
 
+    private myJ48 root;
+
+    Instances instances;
     /**
      * for serialization
      */
@@ -38,9 +41,9 @@ public class myJ48
     private Attribute split_attribute;
 
     /**
-     * Class value if node is leaf.
+     * Index of class value if node is leaf.
      */
-    private double leaf_class;
+    public int leaf_class_idx;
 
     /**
      * Class distribution if node is leaf.
@@ -51,6 +54,7 @@ public class myJ48
      * Class attribute of dataset.
      */
     private Attribute class_attribute;
+
 
     @Override
     public Capabilities getCapabilities() {
@@ -110,7 +114,7 @@ public class myJ48
         Enumeration attrEnum = data.enumerateAttributes();
         while (attrEnum.hasMoreElements()) {
             Attribute attr = (Attribute) attrEnum.nextElement();
-            //Handling nominal, just assign it with majority class
+            //Handling nominal, just assign it with majority value
             if (attr.isNominal()) {
                 AttributeStats attributeStats = data.attributeStats(attr.index());
                 int maxIndex = 0;
@@ -146,14 +150,15 @@ public class myJ48
 
     private void makeTree(Instances data) throws Exception {
         // Check if no instances have reached this node.
+        instances = data;
         if (data.numInstances() == 0) {
             split_attribute = null;
-            leaf_class = Double.NaN;
+            leaf_class_idx = -1;
             leaf_distribution = new double[data.numClasses()];
             return;
         }
 
-        // Compute attribute with maximum gain ratio.
+        // Compute attribute with maximum gain ratio
         double[] gainRatio = new double[data.numAttributes()];
         Enumeration attEnum = data.enumerateAttributes();
         while (attEnum.hasMoreElements()) {
@@ -166,11 +171,9 @@ public class myJ48
                 gainRatio[att.index()] = computeGainRatio(data, att, getOptimumThreshold(data, att));
             }
         }
-        split_attribute = data.attribute(Utils.maxIndex(gainRatio));
-
         // Make leaf if gain ratio is zero. 
         // Otherwise create successors.
-        if (Utils.eq(gainRatio[split_attribute.index()], 0)) {
+        if (Utils.eq(gainRatio[Utils.maxIndex(gainRatio)], 0)) {
             split_attribute = null;
             leaf_distribution = new double[data.numClasses()];
             Enumeration instEnum = data.enumerateInstances();
@@ -179,27 +182,43 @@ public class myJ48
                 leaf_distribution[(int) inst.classValue()]++;
             }
             Utils.normalize(leaf_distribution);
-            leaf_class = Utils.maxIndex(leaf_distribution);
+            leaf_class_idx = Utils.maxIndex(leaf_distribution);
             //leaf_class = maxAttr(data, split_attribute);
             class_attribute = data.classAttribute();
         } else {
+            split_attribute = data.attribute(Utils.maxIndex(gainRatio));
             Instances[] splitData;
-            if (split_attribute.isNominal())
-            {
-                splitData = myJ48.this.splitData(data, split_attribute);                
-            }
-            else
-            {
+            int numChild;
+            if (split_attribute.isNominal()) {
+                numChild = split_attribute.numValues();
+                splitData = splitData(data, split_attribute);
+            } else {
+                numChild = 2;
                 splitData = splitData(data, split_attribute, getOptimumThreshold(data, split_attribute));
             }
-            child = new myJ48[split_attribute.numValues()];
-            for (int j = 0; j < split_attribute.numValues(); j++) {
+            child = new myJ48[numChild];
+            for (int j = 0; j < numChild; j++) {
                 child[j] = new myJ48();
                 child[j].makeTree(splitData[j]);
                 if (Utils.eq(splitData[j].numInstances(), 0)) {
-                    child[j].leaf_class = maxAttr(data, data.attribute(j));
+                    child[j].leaf_class_idx = maxAttr(data, data.attribute(j));
                 }
             }
+
+            for (int i = 0; i < numChild; i++) {
+                if (child[i].leaf_class_idx != 0 && Utils.eq(child[i].leaf_class_idx, -999)) {
+                    double[] classDistribution = new double[data.numClasses()];
+                    Enumeration instanceEnum = data.enumerateInstances();
+                    while (instanceEnum.hasMoreElements()) {
+                        Instance instance = (Instance) instanceEnum.nextElement();
+                        classDistribution[(int) instance.classValue()]++;
+                    }
+                    Utils.normalize(classDistribution);
+                    child[i].leaf_class_idx = Utils.maxIndex(classDistribution);
+                    child[i].leaf_distribution = classDistribution;
+                }
+            }
+
         }
     }
 
@@ -208,12 +227,12 @@ public class myJ48
             throws Exception {
 
         if (instance.hasMissingValue()) {
-            throw new Exception("Can't handle missing value(s)");
+            throw new Exception("This will never happens, sure");
         }
         if (split_attribute == null) {
             {
-                if (!Utils.eq(leaf_class, Double.NaN)) {
-                    return leaf_class;
+                if (!Utils.eq(leaf_class_idx, Double.NaN)) {
+                    return leaf_class_idx;
                 } else {
                     //return instance.classAttribute().;
                     Enumeration a = instance.enumerateAttributes();
@@ -229,38 +248,54 @@ public class myJ48
     @Override
     public double[] distributionForInstance(Instance instance)
             throws Exception {
-        if (split_attribute == null) {
+        if (split_attribute != null) {
+            double split_attribute_idx = 0;
+            if (split_attribute.isNominal()) {
+                split_attribute_idx = instance.value(split_attribute);
+                if (Double.isNaN(split_attribute_idx)) {
+                    Instances[] instancesSplitted = splitData(instances, split_attribute);
+                    int largestNumIdx = -1;
+                    int cnt = 0;
+                    for (int i = 0; i < instancesSplitted.length; ++i) {
+                        int tmp = instancesSplitted[i].numInstances();
+                        if (tmp > cnt) {
+                            largestNumIdx = i;
+                        }
+                    }
+                    split_attribute_idx = largestNumIdx;
+                }
+                if (split_attribute_idx == -1) {
+                    throw new Exception("This will never happens, sure");
+                }
+            } else if (split_attribute.isNumeric()) {
+                double val = instance.value(split_attribute);
+                if (Double.isNaN(val)) {
+                    throw new Exception("This will never happens, sure");
+                } else {
+                    //manual classifying
+                    if (val >= getOptimumThreshold(instances, split_attribute)) {
+                        split_attribute_idx = 1;
+                    } else {
+                        split_attribute_idx = 0;
+                    }
+                }
+            }
+            if (child.length > 0) {
+                return child[(int) split_attribute_idx].distributionForInstance(instance);
+            }
+            if (leaf_distribution != null) {
+                return leaf_distribution;
+            } else {
+                System.out.println("Halo sayang");
+            }
+        } else {
+            return leaf_distribution;
+        }
+        if (leaf_distribution != null) {
             return leaf_distribution;
         } else {
-            if (split_attribute.isNominal())
-            {
-                return child[(int) instance.value(split_attribute)].
-                    distributionForInstance(instance);                
-            }
-            else if (split_attribute.isNumeric())
-            {
-                //something magic happens here, behold
-            }
             return null;
         }
-    }
-
-    private double hitungEntropy(Instances data) {
-        double[] kelas = new double[data.numClasses()];
-        for (int i = 0; i < data.numInstances(); i++) {
-            Instance temp = data.instance(i);
-            kelas[(int) temp.classValue()]++;
-        }
-        for (int i = 0; i < data.numClasses(); i++) {
-            kelas[i] = kelas[i] / data.numInstances();
-        }
-        double entropi = 0;
-        for (int i = 0; i < data.numClasses(); i++) {
-            if (kelas[i] > 0) {
-                entropi = entropi - (kelas[i] * Utils.log2(kelas[i]));
-            }
-        }
-        return entropi;
     }
 
     public double computeGainRatio(Instances data, Attribute attr) throws Exception {
@@ -328,7 +363,7 @@ public class myJ48
         }
 
         for (Instances instances : splitedData) {
-            instances.compactify(); //WEKA said it so
+            instances.compactify(); //WEKA said it so, for the sake of optimizing
         }
 
         return splitedData;
