@@ -13,6 +13,8 @@ import weka.core.Instances;
 import weka.core.Utils;
 
 import java.util.Enumeration;
+import weka.classifiers.trees.j48.C45PruneableClassifierTree;
+import weka.classifiers.trees.j48.NoSplit;
 import weka.core.AttributeStats;
 
 /**
@@ -21,8 +23,6 @@ import weka.core.AttributeStats;
  */
 public class myJ48
         extends Classifier {
-
-    private myJ48 root;
 
     Instances instances;
     /**
@@ -54,7 +54,6 @@ public class myJ48
      * Class attribute of dataset.
      */
     private Attribute class_attribute;
-
 
     @Override
     public Capabilities getCapabilities() {
@@ -218,7 +217,7 @@ public class myJ48
                     child[i].leaf_distribution = classDistribution;
                 }
             }
-
+            pruneTree();
         }
     }
 
@@ -240,8 +239,21 @@ public class myJ48
                 }
             }
         } else {
-            return child[(int) instance.value(split_attribute)].
-                    classifyInstance(instance);
+            if (split_attribute.isNumeric()) {
+                int numericAttrIdx = -1;
+                if (instance.value(split_attribute) > getOptimumThreshold(instances, split_attribute)) {
+                    numericAttrIdx = 1;
+                } else {
+                    numericAttrIdx = 0;
+                }
+                return child[(int) numericAttrIdx].
+                        classifyInstance(instance);
+            } else if (split_attribute.isNominal()) {
+                return child[(int) instance.value(split_attribute)].
+                        classifyInstance(instance);
+            } else {
+                throw new Exception("This will never happens, sure");
+            }
         }
     }
 
@@ -405,6 +417,59 @@ public class myJ48
         }
         double result = (double) threshold[Utils.maxIndex(gainRatio)];
         return result;
+    }
+
+    public double errorRate(Instances instances) throws Exception {
+        int correctInstances = 0;
+        int incorrectInstances = 0;
+        Enumeration enumeration = instances.enumerateInstances();
+        while (enumeration.hasMoreElements()) {
+            Instance instance = (Instance) enumeration.nextElement();
+            if (instance.classValue() == classifyInstance(instance)) {
+                correctInstances++;
+            } else {
+                incorrectInstances++;
+            }
+        }
+        return (double) incorrectInstances / (double) (incorrectInstances + correctInstances);
+    }
+
+    private void pruneTree() throws Exception {
+        //Prepruning, prune before its too late, beybeh
+        if (child != null) {
+            double currErrorRate = this.errorRate(instances);
+
+            double[] classDistribution = new double[instances.numClasses()];
+            Enumeration instanceEnum = instances.enumerateInstances();
+            while (instanceEnum.hasMoreElements()) {
+                Instance instance = (Instance) instanceEnum.nextElement();
+                classDistribution[(int) instance.classValue()]++;
+            }
+            Utils.normalize(classDistribution);
+            int idxClass = Utils.maxIndex(classDistribution);
+
+            int correctInstances = 0;
+            int incorrectInstances = 0;
+            Enumeration enumeration = instances.enumerateInstances();
+            while (enumeration.hasMoreElements()) {
+                Instance instance = (Instance) enumeration.nextElement();
+                if (instance.classValue() == classifyInstance(instance)) {
+                    correctInstances++;
+                } else {
+                    incorrectInstances++;
+                }
+            }
+            double prunedErrorRate = (double) incorrectInstances / (double) (correctInstances + incorrectInstances);
+            if (currErrorRate > prunedErrorRate) {
+                System.out.println("Pruning, behold the power");
+                child = null;
+                split_attribute = null;
+                leaf_class_idx = idxClass;
+                leaf_distribution = classDistribution;
+            }
+
+        }
+
     }
 
 }
