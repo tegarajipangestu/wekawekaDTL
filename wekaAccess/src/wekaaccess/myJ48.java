@@ -13,8 +13,6 @@ import weka.core.Instances;
 import weka.core.Utils;
 
 import java.util.Enumeration;
-import weka.classifiers.trees.j48.C45PruneableClassifierTree;
-import weka.classifiers.trees.j48.NoSplit;
 import weka.core.AttributeStats;
 
 /**
@@ -182,7 +180,6 @@ public class myJ48
             }
             Utils.normalize(leaf_distribution);
             leaf_class_idx = Utils.maxIndex(leaf_distribution);
-            //leaf_class = maxAttr(data, split_attribute);
             class_attribute = data.classAttribute();
         } else {
             split_attribute = data.attribute(Utils.maxIndex(gainRatio));
@@ -233,7 +230,6 @@ public class myJ48
                 if (!Utils.eq(leaf_class_idx, Double.NaN)) {
                     return leaf_class_idx;
                 } else {
-                    //return instance.classAttribute().;
                     Enumeration a = instance.enumerateAttributes();
                     return instance.value(class_attribute);
                 }
