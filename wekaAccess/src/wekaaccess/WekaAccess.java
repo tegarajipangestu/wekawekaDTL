@@ -38,7 +38,7 @@ public class WekaAccess {
 	  System.out.print("Input complete file location: ");
 	  String fileLocation = input.nextLine();
           
-          fileLocation = "/home/tegar/Documents/code/repos/wekawekaDTL/wekaAccess/src/wekaaccess/iris.arff";
+//          fileLocation = "/home/tegar/Documents/code/repos/wekawekaDTL/wekaAccess/src/wekaaccess/iris.arff";
 
 	  if (fileLocation.endsWith(".csv") || fileLocation.endsWith(".arff")) {
 		try { // file arff/csv

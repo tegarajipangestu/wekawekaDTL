@@ -327,7 +327,7 @@ public class myJ48
         infoGain = computeEntropy(data);
         for (int i = 0; i < 2; i++) {
             if (splitData[i].numInstances() > 0) {
-                infoGain -= (double) splitData[i].numInstances()
+                infoGain = infoGain - (double) splitData[i].numInstances()
                         / (double) data.numInstances() * computeEntropy(splitData[i]);
             }
         }
