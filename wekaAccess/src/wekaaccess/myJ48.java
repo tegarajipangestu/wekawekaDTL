@@ -86,24 +86,14 @@ public class myJ48
         makeTree(data);
     }
 
-    public int maxAttr(Instances data, Attribute atr) {
-        Instances[] maxAttr = myJ48.this.splitData(data, atr);
+    public int maxAttr(Instances data, Attribute atr) throws Exception {
+        System.out.println(atr.toString());
         int[] maxval = new int[atr.numValues()];
         for (int i = 0; i < data.numInstances(); i++) {
             Instance temp = data.instance(i);
             maxval[(int) temp.classValue()]++;
         }
-        return findmax(maxval);
-    }
-
-    public int findmax(int[] input) {
-        int max = -1;
-        for (int counter = 1; counter < input.length; counter++) {
-            if (input[counter] > max) {
-                max = counter;
-            }
-        }
-        return max;
+        return Utils.maxIndex(maxval);
     }
 
     private void handleMissingValue(Instances data) {
@@ -197,7 +187,7 @@ public class myJ48
                 child[j] = new myJ48();
                 child[j].makeTree(splitData[j]);
                 if (Utils.eq(splitData[j].numInstances(), 0)) {
-                    child[j].leaf_class_idx = maxAttr(data, data.attribute(j));
+                    child[j].leaf_class_idx = maxAttr(data, data.classAttribute());
                 }
             }
 
