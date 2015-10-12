@@ -57,11 +57,10 @@ public class myJ48
     public Capabilities getCapabilities() {
         Capabilities result = new Capabilities(this);
         result.disableAll();
+
         // attributes
         result.enable(Capabilities.Capability.NOMINAL_ATTRIBUTES);
         result.enable(Capabilities.Capability.NUMERIC_ATTRIBUTES);
-        result.enable(Capabilities.Capability.MISSING_VALUES);
-
         result.enable(Capabilities.Capability.MISSING_VALUES);
 
         // class
@@ -81,9 +80,12 @@ public class myJ48
         getCapabilities().testWithFail(data);
 
         // handling missing value
-        handleMissingValue(data);
+        Instances noMissingValueData = handleMissingValue(data);
 
-        makeTree(data);
+        for (int i = 0; i < noMissingValueData.numInstances(); i++) {
+            System.out.println(noMissingValueData.instance(i).toString());
+        }
+        makeTree(noMissingValueData);
     }
 
     public int maxAttr(Instances data, Attribute atr) throws Exception {
@@ -95,8 +97,9 @@ public class myJ48
         return Utils.maxIndex(maxval);
     }
 
-    private void handleMissingValue(Instances data) {
+    private Instances handleMissingValue(Instances _data) {
 
+        Instances data = _data;
         Enumeration attrEnum = data.enumerateAttributes();
         while (attrEnum.hasMoreElements()) {
             Attribute attr = (Attribute) attrEnum.nextElement();
@@ -109,10 +112,11 @@ public class myJ48
                         maxIndex = i;
                     }
                 }
-                Enumeration instEnum = data.enumerateInstances();
-                while (instEnum.hasMoreElements()) {
-                    Instance instance = (Instance) instEnum.nextElement();
+                for (int i = 0; i < data.numInstances(); i++) {
+                    Instance instance = (Instance) data.instance(i);
+//                    System.out.println(instance.toString());
                     if (instance.isMissing(attr.index())) {
+                        System.out.println("Yes");
                         instance.setValue(attr.index(), maxIndex);
                     }
                 }
@@ -123,15 +127,50 @@ public class myJ48
                 if (Double.isNaN(mean)) {
                     mean = 0;
                 }
-                Enumeration instEnumerate = data.enumerateInstances();
-                while (instEnumerate.hasMoreElements()) {
-                    Instance instance = (Instance) instEnumerate.nextElement();
+                for (int i = 0; i < data.numInstances(); i++) {
+                    Instance instance = (Instance) data.instance(i);
                     if (instance.isMissing(attr.index())) {
-                        instance.setValue(attr.index(), mean);
+                        instance.setValue(attr.index(), (int) mean);
                     }
                 }
             }
         }
+        return data;
+    }
+
+    private Instance handleMissingValue(Instance _data) {
+
+        Instance instance = _data;
+        Instances data = instances;
+        Enumeration attrEnum = data.enumerateAttributes();
+        while (attrEnum.hasMoreElements()) {
+            Attribute attr = (Attribute) attrEnum.nextElement();
+            //Handling nominal, just assign it with majority value
+            if (attr.isNominal()) {
+                AttributeStats attributeStats = data.attributeStats(attr.index());
+                int maxIndex = 0;
+                for (int i = 1; i < attr.numValues(); i++) {
+                    if (attributeStats.nominalCounts[maxIndex] < attributeStats.nominalCounts[i]) {
+                        maxIndex = i;
+                    }
+                }
+                if (instance.isMissing(attr.index())) {
+                    System.out.println("Yes");
+                    instance.setValue(attr.index(), maxIndex);
+                }
+            } //Handling numeric, just assign it with mean of attribute's instances
+            else if (attr.isNumeric()) {
+                AttributeStats attributeStats = data.attributeStats(attr.index());
+                double mean = attributeStats.numericStats.mean;
+                if (Double.isNaN(mean)) {
+                    mean = 0;
+                }
+                if (instance.isMissing(attr.index())) {
+                    instance.setValue(attr.index(), (int) mean);
+                }
+            }
+        }
+        return instance;
     }
 
     private void makeTree(Instances data) throws Exception {
@@ -245,6 +284,7 @@ public class myJ48
     @Override
     public double[] distributionForInstance(Instance instance)
             throws Exception {
+        System.out.println("Instance = " + instance.toString());
         if (split_attribute != null) {
             double split_attribute_idx = 0;
             if (split_attribute.isNominal()) {
@@ -267,14 +307,16 @@ public class myJ48
             } else if (split_attribute.isNumeric()) {
                 double val = instance.value(split_attribute);
                 if (Double.isNaN(val)) {
-                    throw new Exception("This will never happens, sure");
+                    instance = handleMissingValue(instance);
+                    System.out.println(val);
+                    System.out.println(instance.toString());
+                    val = instance.value(split_attribute);
+                }
+                //manual classifying
+                if (val >= getOptimumThreshold(instances, split_attribute)) {
+                    split_attribute_idx = 1;
                 } else {
-                    //manual classifying
-                    if (val >= getOptimumThreshold(instances, split_attribute)) {
-                        split_attribute_idx = 1;
-                    } else {
-                        split_attribute_idx = 0;
-                    }
+                    split_attribute_idx = 0;
                 }
             }
             if (child.length > 0) {
