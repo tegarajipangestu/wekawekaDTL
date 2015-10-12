@@ -87,7 +87,6 @@ public class myJ48
     }
 
     public int maxAttr(Instances data, Attribute atr) throws Exception {
-        System.out.println(atr.toString());
         int[] maxval = new int[atr.numValues()];
         for (int i = 0; i < data.numInstances(); i++) {
             Instance temp = data.instance(i);
